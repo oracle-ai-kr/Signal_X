@@ -1,0 +1,1243 @@
+/* ═══════════════════════════════════════════════════════════════════
+   SIGNAL X — 레시피 코어 [S877]  (워커-안전 SSOT)
+   내용: RECIPES_BY_MKT 레지스트리 + feats/match/lt(구 sx_render) + fires/votes(구 sx_recipe_signal)
+   로드 순서: (window) sx_render/sx_recipe_signal보다 먼저 · (worker) sx_analysis_engine 다음 importScripts
+   전략: 전역 동명 함수 유지 — 기존 호출부 전부 무변경. 미리보기(preview)는 window측(sx_recipe_signal)만 — 워커/코어 무오염.
+   ⚠ 이 파일 수정=window·worker 동시 반영(미러 없음 — 그게 목적).
+   ═══════════════════════════════════════════════════════════════════ */
+// [S868→S877] 하이브리드 기본 ON — 양 컨텍스트 공통. 킬스위치: window=🍳 pill · worker=스캔 config.recipeOn(기동 시 전파).
+if (typeof globalThis!=='undefined' && typeof globalThis.SX_RECIPE_REBOUND==='undefined') globalThis.SX_RECIPE_REBOUND = true;
+
+// [S865] 세트 전면 교체 — S864 지평렌즈 빔서치(스냅샷 20260701) + 통일 등록표준: 기간반분 부호일치(h1·h2·각 n≥10) + fake Δ렌즈≥5%p + 다양성(J≥0.5 클러스터당 4) + 상한130. 구세트(991개·혼재혈통)는 sx_recipes_backup_S862_20260702.json 백업. src에 lens/retLens/h1/h2 확장(표시 호환 유지).
+  // [S849] 레시피 3시장 분리 — 시장특성이 달라 세트 비혼용. kr=기존311(확장풀 v34 유산)+발굴풀 신규55(중복13 제외) / us·coin=발굴풀 스냅샷(20260701) 전용. 소비처는 _R()(currentMarket 기준) 또는 recipesFor(mk). 등록 표준: 게이트(S848 상대화) + n≥30 + fake ΔN10≥5%p + 카테고리 상한 130.
+var RECIPES_BY_MKT = {
+  kr: [
+  // ── deadcat · real — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한해제) 205개 ──
+  {id:'dc_r_L01', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + MA200 이격도%<-28.66',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:94,late:0.1009,n10:0.777,surv:0.713,lens:0.777,retLens:0.1253,h1:0.82,h2:0.72}},
+  {id:'dc_r_L02', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + BB %B<0.07 + MA200 이격도%<-28.66',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'bbPctB',type:'num',dir:'lt',th:0.07}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:83,late:0.097,n10:0.771,surv:0.737,lens:0.771,retLens:0.1212,h1:0.8,h2:0.73}},
+  {id:'dc_r_L03', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + MA200 이격도%<-28.66',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:116,late:0.1054,n10:0.776,surv:0.76,lens:0.776,retLens:0.1189,h1:0.76,h2:0.8}},
+  {id:'dc_r_L04', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA200 이격도%<-28.66 + MA5 기울기%<-3.61',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:122,late:0.099,n10:0.721,surv:0.692,lens:0.738,retLens:0.1163,h1:0.71,h2:0.77}},
+  {id:'dc_r_L05', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA120 이격도%<-20.38 + MA5 기울기%<-3.61',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:148,late:0.0906,n10:0.743,surv:0.693,lens:0.764,retLens:0.1065,h1:0.74,h2:0.79}},
+  {id:'dc_r_L06', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + BB %B<0.07 + MA20 이격도%<-7.12',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'bbPctB',type:'num',dir:'lt',th:0.07}, {key:'dev20',type:'num',dir:'lt',th:-7.12}], src:{n:167,late:0.0838,n10:0.802,surv:0.723,lens:0.784,retLens:0.1033,h1:0.89,h2:0.65}},
+  {id:'dc_r_L07', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + MA5 기울기%<-3.61',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:187,late:0.0868,n10:0.786,surv:0.712,lens:0.781,retLens:0.102,h1:0.83,h2:0.71}},
+  {id:'dc_r_L08', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + BB %B<0.07 + MA5 기울기%<-3.61',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'bbPctB',type:'num',dir:'lt',th:0.07}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:151,late:0.0798,n10:0.795,surv:0.691,lens:0.788,retLens:0.1012,h1:0.83,h2:0.73}},
+  {id:'dc_r_L09', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA60 이격도%<-12.44 + MA5 기울기%<-3.61',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:159,late:0.0881,n10:0.78,surv:0.697,lens:0.786,retLens:0.1007,h1:0.82,h2:0.74}},
+  {id:'dc_r_L10', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12 + MFI(자금흐름)<35.82',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:198,late:0.0826,n10:0.773,surv:0.701,lens:0.753,retLens:0.0963,h1:0.89,h2:0.6}},
+  {id:'dc_r_L11', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + MFI(자금흐름)<35.82',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:230,late:0.0825,n10:0.783,surv:0.693,lens:0.774,retLens:0.0962,h1:0.83,h2:0.71}},
+  {id:'dc_r_L12', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + MA20 이격도%<-7.12',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev20',type:'num',dir:'lt',th:-7.12}], src:{n:226,late:0.0837,n10:0.779,surv:0.736,lens:0.761,retLens:0.0962,h1:0.85,h2:0.64}},
+  {id:'dc_r_L13', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12 + VR(거래량비율)<60.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:160,late:0.0831,n10:0.794,surv:0.719,lens:0.781,retLens:0.0962,h1:0.9,h2:0.64}},
+  {id:'dc_r_L14', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.07 + MA200 이격도%<-28.66 + MA5 기울기%<-3.61',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.07}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:160,late:0.078,n10:0.75,surv:0.67,lens:0.731,retLens:0.0953,h1:0.79,h2:0.63}},
+  {id:'dc_r_L15', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + MA5 기울기%<-3.61',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:228,late:0.0805,n10:0.763,surv:0.692,lens:0.754,retLens:0.0934,h1:0.8,h2:0.69}},
+  {id:'dc_r_L16', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + PSAR 하락',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'sarBear',type:'bin'}], src:{n:306,late:0.0742,n10:0.752,surv:0.666,lens:0.748,retLens:0.0929,h1:0.79,h2:0.68}},
+  {id:'dc_r_L17', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + MA60 이격도%<-12.44',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:188,late:0.0814,n10:0.75,surv:0.717,lens:0.75,retLens:0.092,h1:0.83,h2:0.66}},
+  {id:'dc_r_L18', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA60 이격도%<-12.44 + MFI(자금흐름)<35.82',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:180,late:0.0791,n10:0.728,surv:0.687,lens:0.733,retLens:0.0914,h1:0.88,h2:0.62}},
+  {id:'dc_r_L19', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA60 이격도%<-12.44 + VR(거래량비율)<60.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:154,late:0.0746,n10:0.76,surv:0.69,lens:0.773,retLens:0.0914,h1:0.92,h2:0.65}},
+  {id:'dc_r_L20', pool:'deadcat', kind:'real', mode:'and', label:'MA200 이격도%<-28.66 + MA5 기울기%<-3.61 + MFI(자금흐름)<35.82',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:182,late:0.0799,n10:0.742,surv:0.673,lens:0.731,retLens:0.0914,h1:0.8,h2:0.66}},
+  {id:'dc_r_L21', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + Stoch %K<7.95 + VR(거래량비율)<60.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:132,late:0.0738,n10:0.811,surv:0.716,lens:0.803,retLens:0.0898,h1:0.86,h2:0.75}},
+  {id:'dc_r_L22', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + Stoch %K<7.95 + MA60 이격도%<-12.44',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:110,late:0.0756,n10:0.818,surv:0.734,lens:0.818,retLens:0.0876,h1:0.88,h2:0.77}},
+  {id:'dc_r_L23', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + RSI<36.8 + MA120 이격도%<-20.38',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev120',type:'num',dir:'lt',th:-20.38}], src:{n:258,late:0.068,n10:0.76,surv:0.673,lens:0.752,retLens:0.0869,h1:0.87,h2:0.64}},
+  {id:'dc_r_L24', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + VR(거래량비율)<60.95 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'vr',type:'num',dir:'lt',th:60.95}, {key:'nearSup',type:'bin'}], src:{n:193,late:0.0689,n10:0.803,surv:0.7,lens:0.793,retLens:0.0848,h1:0.87,h2:0.73}},
+  {id:'dc_r_L25', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + MA20 이격도%<-7.12 + MA120 이격도%<-20.38',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev120',type:'num',dir:'lt',th:-20.38}], src:{n:243,late:0.0697,n10:0.77,surv:0.68,lens:0.749,retLens:0.0839,h1:0.85,h2:0.63}},
+  {id:'dc_r_L26', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + Stoch %K<7.95 + MA120 이격도%<-20.38',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev120',type:'num',dir:'lt',th:-20.38}], src:{n:207,late:0.0622,n10:0.773,surv:0.68,lens:0.773,retLens:0.0838,h1:0.85,h2:0.7}},
+  {id:'dc_r_L27', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + ADX>23.35 + MA120 이격도%<-20.38',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'dev120',type:'num',dir:'lt',th:-20.38}], src:{n:127,late:0.0579,n10:0.709,surv:0.686,lens:0.732,retLens:0.0817,h1:0.75,h2:0.72}},
+  {id:'dc_r_L28', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + ADX>23.35 + MA200 이격도%<-28.66',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:107,late:0.0614,n10:0.72,surv:0.666,lens:0.729,retLens:0.0803,h1:0.66,h2:0.81}},
+  {id:'dc_r_L29', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA5 기울기%<-3.61 + VR(거래량비율)<60.95',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:150,late:0.0662,n10:0.793,surv:0.693,lens:0.767,retLens:0.08,h1:0.84,h2:0.69}},
+  {id:'dc_r_L30', pool:'deadcat', kind:'real', mode:'and', label:'ADX>23.35 + 골든크로스 5×9 + 골든크로스 5×20',
+   conds:[{key:'adx',type:'num',dir:'gt',th:23.35}, {key:'gx5_9',type:'bin'}, {key:'gx5_20',type:'bin'}], src:{n:91,late:0.0722,n10:0.769,surv:0.709,lens:0.78,retLens:0.0786,h1:0.71,h2:0.86}},
+  {id:'dc_r_L31', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + ADX>23.35 + 골든크로스 5×20',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'gx5_20',type:'bin'}], src:{n:98,late:0.0789,n10:0.745,surv:0.726,lens:0.735,retLens:0.0776,h1:0.67,h2:0.8}},
+  {id:'dc_r_L32', pool:'deadcat', kind:'real', mode:'and', label:'MA200 이격도%<-28.66 + RSI 상승다이버전스 + PSAR 하락',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'rsiDiv',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:133,late:0.0539,n10:0.752,surv:0.65,lens:0.744,retLens:0.076,h1:0.69,h2:0.8}},
+  {id:'dc_r_L33', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + MA20 이격도%<-7.12 + MA60 이격도%<-12.44',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:308,late:0.0632,n10:0.747,surv:0.665,lens:0.75,retLens:0.0755,h1:0.87,h2:0.6}},
+  {id:'dc_r_L34', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.07 + MA60 이격도%<-12.44 + MA5 기울기%<-3.61',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.07}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:245,late:0.0613,n10:0.776,surv:0.669,lens:0.763,retLens:0.0749,h1:0.85,h2:0.65}},
+  {id:'dc_r_L35', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + MA60 이격도%<-12.44 + MA5 기울기%<-3.61',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:278,late:0.0642,n10:0.77,surv:0.674,lens:0.763,retLens:0.0748,h1:0.87,h2:0.63}},
+  {id:'dc_r_L36', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + Stoch %K<7.95 + MA60 이격도%<-12.44',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:246,late:0.0587,n10:0.768,surv:0.679,lens:0.772,retLens:0.0739,h1:0.87,h2:0.65}},
+  {id:'dc_r_L37', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44 + VR(거래량비율)<60.95',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:166,late:0.0617,n10:0.759,surv:0.687,lens:0.765,retLens:0.0736,h1:0.81,h2:0.73}},
+  {id:'dc_r_L38', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + Stoch %K<7.95 + MA120 이격도%<-20.38',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev120',type:'num',dir:'lt',th:-20.38}], src:{n:254,late:0.057,n10:0.76,surv:0.686,lens:0.744,retLens:0.0732,h1:0.81,h2:0.68}},
+  {id:'dc_r_L39', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + MA5 기울기%<-3.61 + RSI 상승다이버전스',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'rsiDiv',type:'bin'}], src:{n:80,late:0.0545,n10:0.788,surv:0.687,lens:0.8,retLens:0.0725,h1:0.84,h2:0.77}},
+  {id:'dc_r_L40', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MFI(자금흐름)<35.82 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'mfi',type:'num',dir:'lt',th:35.82}, {key:'nearSup',type:'bin'}], src:{n:235,late:0.0596,n10:0.749,surv:0.671,lens:0.736,retLens:0.0725,h1:0.83,h2:0.67}},
+  {id:'dc_r_L41', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + Stoch %K<7.95 + ADX>23.35',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'adx',type:'num',dir:'gt',th:23.35}], src:{n:175,late:0.0562,n10:0.789,surv:0.728,lens:0.794,retLens:0.0713,h1:0.87,h2:0.69}},
+  {id:'dc_r_L42', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA20 이격도%<-7.12 + MA60 이격도%<-12.44',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:282,late:0.0605,n10:0.773,surv:0.692,lens:0.759,retLens:0.0712,h1:0.83,h2:0.67}},
+  {id:'dc_r_L43', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA5 기울기%<-3.61 + VR(거래량비율)<60.95',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:261,late:0.0606,n10:0.755,surv:0.677,lens:0.732,retLens:0.0709,h1:0.84,h2:0.61}},
+  {id:'dc_r_L44', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + Stoch %K<7.95 + MA5 기울기%<-3.61',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:292,late:0.0579,n10:0.798,surv:0.699,lens:0.771,retLens:0.0708,h1:0.85,h2:0.66}},
+  {id:'dc_r_L45', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44 + MFI(자금흐름)<35.82',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:212,late:0.0606,n10:0.755,surv:0.674,lens:0.741,retLens:0.0701,h1:0.85,h2:0.65}},
+  {id:'dc_r_L46', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44 + MA5 기울기%<-3.61',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:229,late:0.0584,n10:0.795,surv:0.69,lens:0.773,retLens:0.0701,h1:0.86,h2:0.67}},
+  {id:'dc_r_L47', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + RSI 상승다이버전스 + 지지선 근접',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'rsiDiv',type:'bin'}, {key:'nearSup',type:'bin'}], src:{n:107,late:0.0436,n10:0.748,surv:0.678,lens:0.757,retLens:0.0694,h1:0.83,h2:0.71}},
+  {id:'dc_r_L48', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA5 기울기%<-3.61 + MFI(자금흐름)<35.82',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:205,late:0.0582,n10:0.785,surv:0.674,lens:0.741,retLens:0.0688,h1:0.85,h2:0.63}},
+  {id:'dc_r_L49', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + Stoch %K<7.95 + MA5 기울기%<-3.61',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:299,late:0.0558,n10:0.796,surv:0.682,lens:0.769,retLens:0.0688,h1:0.83,h2:0.68}},
+  {id:'dc_r_L50', pool:'deadcat', kind:'real', mode:'and', label:'MA200 이격도%<-28.66 + MA5 기울기%<-3.61 + RSI 상승다이버전스',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'rsiDiv',type:'bin'}], src:{n:68,late:0.0522,n10:0.765,surv:0.65,lens:0.765,retLens:0.0684,h1:0.8,h2:0.73}},
+  {id:'dc_r_L51', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44 + DI 하락우위',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'diBear',type:'bin'}], src:{n:324,late:0.0533,n10:0.735,surv:0.661,lens:0.735,retLens:0.067,h1:0.83,h2:0.64}},
+  {id:'dc_r_L52', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + ADX>23.35 + MA60 이격도%<-12.44',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:139,late:0.0595,n10:0.777,surv:0.727,lens:0.777,retLens:0.0663,h1:0.86,h2:0.68}},
+  {id:'dc_r_L53', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA20 이격도%<-7.12 + MA5 기울기%<-3.61',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:348,late:0.0519,n10:0.753,surv:0.656,lens:0.724,retLens:0.0661,h1:0.75,h2:0.68}},
+  {id:'dc_r_L54', pool:'deadcat', kind:'real', mode:'and', label:'MA60 이격도%<-12.44 + VR(거래량비율)<60.95 + 골든크로스 5×9',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'vr',type:'num',dir:'lt',th:60.95}, {key:'gx5_9',type:'bin'}], src:{n:53,late:0.0584,n10:0.792,surv:0.696,lens:0.792,retLens:0.0661,h1:0.94,h2:0.59}},
+  {id:'dc_r_L55', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + Stoch %K<7.95 + RSI 상승다이버전스',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'rsiDiv',type:'bin'}], src:{n:98,late:0.0484,n10:0.765,surv:0.718,lens:0.745,retLens:0.0657,h1:0.77,h2:0.73}},
+  {id:'dc_r_L56', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-7.12 + MA120 이격도%<-20.38 + RSI 상승다이버전스',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'rsiDiv',type:'bin'}], src:{n:94,late:0.0534,n10:0.766,surv:0.714,lens:0.755,retLens:0.0654,h1:0.76,h2:0.75}},
+  {id:'dc_r_L57', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + RSI 상승다이버전스 + VR(거래량비율)<60.95',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'rsiDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:61,late:0.0605,n10:0.77,surv:0.754,lens:0.787,retLens:0.0651,h1:0.94,h2:0.72}},
+  {id:'dc_r_L58', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA5 기울기%<-3.61 + RSI 상승다이버전스',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'rsiDiv',type:'bin'}], src:{n:86,late:0.0548,n10:0.721,surv:0.699,lens:0.744,retLens:0.0645,h1:0.74,h2:0.75}},
+  {id:'dc_r_L59', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + Stoch %K<7.95 + MA20 이격도%<-7.12',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev20',type:'num',dir:'lt',th:-7.12}], src:{n:397,late:0.052,n10:0.763,surv:0.681,lens:0.751,retLens:0.0643,h1:0.82,h2:0.65}},
+  {id:'dc_r_L60', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA20 이격도%<-7.12 + RSI 상승다이버전스',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'rsiDiv',type:'bin'}], src:{n:79,late:0.0537,n10:0.772,surv:0.705,lens:0.747,retLens:0.0635,h1:0.73,h2:0.76}},
+  {id:'dc_r_L61', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA20 이격도%<-7.12 + RSI 상승다이버전스',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'rsiDiv',type:'bin'}], src:{n:109,late:0.0555,n10:0.725,surv:0.717,lens:0.734,retLens:0.0633,h1:0.74,h2:0.73}},
+  {id:'dc_r_L62', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + RSI 상승다이버전스 + 지지선 근접',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'rsiDiv',type:'bin'}, {key:'nearSup',type:'bin'}], src:{n:134,late:0.048,n10:0.746,surv:0.716,lens:0.731,retLens:0.0631,h1:0.74,h2:0.73}},
+  {id:'dc_r_L63', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + ADX>23.35 + MFI(자금흐름)<35.82',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:184,late:0.0463,n10:0.734,surv:0.681,lens:0.766,retLens:0.0621,h1:0.88,h2:0.64}},
+  {id:'dc_r_L64', pool:'deadcat', kind:'real', mode:'and', label:'ADX>23.35 + MA5 기울기%<-3.61 + VR(거래량비율)<60.95',
+   conds:[{key:'adx',type:'num',dir:'gt',th:23.35}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:164,late:0.0509,n10:0.744,surv:0.706,lens:0.75,retLens:0.062,h1:0.85,h2:0.63}},
+  {id:'dc_r_L65', pool:'deadcat', kind:'real', mode:'and', label:'RSI 상승다이버전스 + VR(거래량비율)<60.95 + 지지선 근접',
+   conds:[{key:'rsiDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:60.95}, {key:'nearSup',type:'bin'}], src:{n:60,late:0.0575,n10:0.833,surv:0.762,lens:0.817,retLens:0.062,h1:0.9,h2:0.78}},
+  {id:'dc_r_L66', pool:'deadcat', kind:'real', mode:'and', label:'ADX>23.35 + VR(거래량비율)<60.95 + 골든크로스 5×9',
+   conds:[{key:'adx',type:'num',dir:'gt',th:23.35}, {key:'vr',type:'num',dir:'lt',th:60.95}, {key:'gx5_9',type:'bin'}], src:{n:126,late:0.049,n10:0.754,surv:0.732,lens:0.738,retLens:0.0613,h1:0.79,h2:0.67}},
+  {id:'dc_r_L67', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-7.12 + RSI 상승다이버전스 + VR(거래량비율)<60.95',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'rsiDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:52,late:0.0627,n10:0.75,surv:0.742,lens:0.75,retLens:0.0612,h1:0.92,h2:0.69}},
+  {id:'dc_r_L68', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.07 + ADX>23.35 + VR(거래량비율)<60.95',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.07}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:107,late:0.0481,n10:0.748,surv:0.695,lens:0.785,retLens:0.0612,h1:0.85,h2:0.69}},
+  {id:'dc_r_L69', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI 상승다이버전스 + PSAR 하락',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsiDiv',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:163,late:0.049,n10:0.761,surv:0.679,lens:0.742,retLens:0.0611,h1:0.77,h2:0.71}},
+  {id:'dc_r_L70', pool:'deadcat', kind:'real', mode:'and', label:'ADX>23.35 + MA20 이격도%<-7.12 + VR(거래량비율)<60.95',
+   conds:[{key:'adx',type:'num',dir:'gt',th:23.35}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:248,late:0.0451,n10:0.746,surv:0.704,lens:0.746,retLens:0.0596,h1:0.86,h2:0.6}},
+  // ── deadcat · real 추가 [S1094] — S864 렌즈발굴 재현(스냅 20260701) + 교차universe 감사(홀드아웃풀 중앙값+귀무중심 통과·z+5~12) · KR기존70과 완전중복48 제거한 순수신규 135개. realK 앙상블(겹침 단조=하위도 겹침시 유효)로 전부 등록·상한 해제. ⚠src=발굴 snapshot 통계(표시용·mean이라 실제 중앙값은 ~절반). ──
+  {id:'dc_r_L71', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + 슬로우스토 골든',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'stochSlowGc',type:'bin'}], src:{n:53,late:0.0986,n10:0.7925,surv:0.7075,lens:0.8113,retLens:0.11,h1:0.85,h2:0.74}},
+  {id:'dc_r_L72', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12 + MA200 이격도%<-28.66',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:128,late:0.0944,n10:0.7266,surv:0.7156,lens:0.7422,retLens:0.1094,h1:0.71,h2:0.78}},
+  {id:'dc_r_L73', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA200 이격도%<-28.66 + MFI(자금흐름)<35.82',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:114,late:0.0913,n10:0.7456,surv:0.6965,lens:0.7632,retLens:0.108,h1:0.8,h2:0.74}},
+  {id:'dc_r_L74', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-7.12 + MA200 이격도%<-28.66 + 슬로우스토 골든',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'stochSlowGc',type:'bin'}], src:{n:59,late:0.0932,n10:0.7966,surv:0.7034,lens:0.7966,retLens:0.1079,h1:0.84,h2:0.71}},
+  {id:'dc_r_L75', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA200 이격도%<-28.66 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'nearSup',type:'bin'}], src:{n:118,late:0.0922,n10:0.7627,surv:0.7347,lens:0.7627,retLens:0.1067,h1:0.69,h2:0.83}},
+  {id:'dc_r_L76', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + MA120 이격도%<-20.38',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev120',type:'num',dir:'lt',th:-20.38}], src:{n:126,late:0.0838,n10:0.7619,surv:0.7032,lens:0.7619,retLens:0.1014,h1:0.84,h2:0.69}},
+  {id:'dc_r_L77', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA200 이격도%<-28.66 + VR(거래량비율)<60.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:95,late:0.0803,n10:0.7684,surv:0.7063,lens:0.8211,retLens:0.1008,h1:0.89,h2:0.78}},
+  {id:'dc_r_L78', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + MA20 이격도%<-7.12',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev20',type:'num',dir:'lt',th:-7.12}], src:{n:191,late:0.0826,n10:0.7801,surv:0.6932,lens:0.7592,retLens:0.1004,h1:0.87,h2:0.61}},
+  {id:'dc_r_L79', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + MA200 이격도%<-28.66 + MA5 기울기%<-3.61',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:178,late:0.0867,n10:0.7753,surv:0.6787,lens:0.7584,retLens:0.1001,h1:0.84,h2:0.64}},
+  {id:'dc_r_L80', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + MA60 이격도%<-12.44',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:140,late:0.0809,n10:0.7786,surv:0.675,lens:0.7643,retLens:0.0993,h1:0.88,h2:0.64}},
+  {id:'dc_r_L81', pool:'deadcat', kind:'real', mode:'and', label:'MA200 이격도%<-28.66 + MFI(자금흐름)<35.82 + 슬로우스토 골든',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'mfi',type:'num',dir:'lt',th:35.82}, {key:'stochSlowGc',type:'bin'}], src:{n:54,late:0.0817,n10:0.7222,surv:0.6593,lens:0.7407,retLens:0.0972,h1:0.83,h2:0.64}},
+  {id:'dc_r_L82', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA5 기울기%<-3.61 + VR(거래량비율)<60.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:137,late:0.0797,n10:0.7883,surv:0.6759,lens:0.7956,retLens:0.0961,h1:0.89,h2:0.69}},
+  {id:'dc_r_L83', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + MA5 기울기%<-3.61',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:190,late:0.0753,n10:0.7842,surv:0.6626,lens:0.7684,retLens:0.0961,h1:0.84,h2:0.67}},
+  {id:'dc_r_L84', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + MA120 이격도%<-20.38',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev120',type:'num',dir:'lt',th:-20.38}], src:{n:160,late:0.0855,n10:0.75,surv:0.7288,lens:0.75,retLens:0.0959,h1:0.78,h2:0.72}},
+  {id:'dc_r_L85', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + OBV 상승다이버전스',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'obvDiv',type:'bin'}], src:{n:61,late:0.0761,n10:0.8197,surv:0.6836,lens:0.8033,retLens:0.0945,h1:0.86,h2:0.5}},
+  {id:'dc_r_L86', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12 + MA5 기울기%<-3.61',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:204,late:0.0795,n10:0.7794,surv:0.6975,lens:0.7745,retLens:0.0943,h1:0.82,h2:0.71}},
+  {id:'dc_r_L87', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + Stoch %K<7.95 + MA200 이격도%<-28.66',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:84,late:0.0819,n10:0.7857,surv:0.7476,lens:0.7619,retLens:0.0938,h1:0.72,h2:0.82}},
+  {id:'dc_r_L88', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + BB %B<0.07 + VR(거래량비율)<60.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'bbPctB',type:'num',dir:'lt',th:0.07}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:158,late:0.0706,n10:0.8228,surv:0.6911,lens:0.8165,retLens:0.0935,h1:0.9,h2:0.71}},
+  {id:'dc_r_L90', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + Stoch %K<7.95 + MA20 이격도%<-7.12',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev20',type:'num',dir:'lt',th:-7.12}], src:{n:149,late:0.0798,n10:0.8121,surv:0.7564,lens:0.7785,retLens:0.0925,h1:0.84,h2:0.7}},
+  {id:'dc_r_L91', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + VR(거래량비율)<60.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:178,late:0.0697,n10:0.8202,surv:0.6775,lens:0.809,retLens:0.0917,h1:0.91,h2:0.69}},
+  {id:'dc_r_L92', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA120 이격도%<-20.38 + MFI(자금흐름)<35.82',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:152,late:0.081,n10:0.7434,surv:0.7026,lens:0.7566,retLens:0.0911,h1:0.85,h2:0.71}},
+  {id:'dc_r_L93', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + MA200 이격도%<-28.66 + RSI 상승다이버전스',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'rsiDiv',type:'bin'}], src:{n:65,late:0.0528,n10:0.8462,surv:0.6615,lens:0.8308,retLens:0.0911,h1:0.87,h2:0.79}},
+  {id:'dc_r_L94', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12 + PSAR 하락',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'sarBear',type:'bin'}], src:{n:269,late:0.0744,n10:0.7546,surv:0.6952,lens:0.7509,retLens:0.0897,h1:0.83,h2:0.65}},
+  {id:'dc_r_L95', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA200 이격도%<-28.66 + MFI(자금흐름)<35.82',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:141,late:0.0745,n10:0.7518,surv:0.6624,lens:0.7447,retLens:0.0895,h1:0.78,h2:0.72}},
+  {id:'dc_r_L96', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + Stoch %K<7.95 + MA200 이격도%<-28.66',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:190,late:0.0687,n10:0.7632,surv:0.6747,lens:0.7526,retLens:0.0893,h1:0.78,h2:0.72}},
+  {id:'dc_r_L97', pool:'deadcat', kind:'real', mode:'and', label:'MA60 이격도%<-12.44 + MA200 이격도%<-28.66 + DI 투매소진(강추세)',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'diRebound',type:'bin'}], src:{n:51,late:0.0752,n10:0.8235,surv:0.7451,lens:0.8431,retLens:0.089,h1:0.97,h2:0.53}},
+  {id:'dc_r_L98', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12 + DI 하락우위',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'diBear',type:'bin'}], src:{n:271,late:0.0739,n10:0.7601,surv:0.6985,lens:0.7565,retLens:0.0882,h1:0.84,h2:0.64}},
+  {id:'dc_r_L99', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA120 이격도%<-20.38 + MA200 이격도%<-28.66',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:319,late:0.0707,n10:0.7492,surv:0.6828,lens:0.7492,retLens:0.088,h1:0.78,h2:0.7}},
+  {id:'dc_r_L100', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + RSI<36.8',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'rsi',type:'num',dir:'lt',th:36.8}], src:{n:249,late:0.0676,n10:0.7831,surv:0.6763,lens:0.7751,retLens:0.0878,h1:0.85,h2:0.67}},
+  {id:'dc_r_L101', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}], src:{n:278,late:0.0728,n10:0.7482,surv:0.6928,lens:0.7446,retLens:0.0873,h1:0.82,h2:0.64}},
+  {id:'dc_r_L102', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12 + 엔벨로프 하단이탈',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'envDn',type:'bin'}], src:{n:278,late:0.0728,n10:0.7482,surv:0.6928,lens:0.7446,retLens:0.0873,h1:0.82,h2:0.64}},
+  {id:'dc_r_L103', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'nearSup',type:'bin'}], src:{n:209,late:0.075,n10:0.7608,surv:0.71,lens:0.7416,retLens:0.0873,h1:0.82,h2:0.65}},
+  {id:'dc_r_L104', pool:'deadcat', kind:'real', mode:'and', label:'MA200 이격도%<-28.66 + DI 투매소진(강추세)',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'diRebound',type:'bin'}], src:{n:53,late:0.0765,n10:0.8302,surv:0.7528,lens:0.8491,retLens:0.0873,h1:0.97,h2:0.53}},
+  {id:'dc_r_L105', pool:'deadcat', kind:'real', mode:'and', label:'ADX>23.35 + MA200 이격도%<-28.66 + DI 투매소진(강추세)',
+   conds:[{key:'adx',type:'num',dir:'gt',th:23.35}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'diRebound',type:'bin'}], src:{n:53,late:0.0765,n10:0.8302,surv:0.7528,lens:0.8491,retLens:0.0873,h1:0.97,h2:0.53}},
+  {id:'dc_r_L106', pool:'deadcat', kind:'real', mode:'and', label:'MA200 이격도%<-28.66 + MACD 영선아래 + DI 투매소진(강추세)',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'macdBelow0',type:'bin'}, {key:'diRebound',type:'bin'}], src:{n:53,late:0.0765,n10:0.8302,surv:0.7528,lens:0.8491,retLens:0.0873,h1:0.97,h2:0.53}},
+  {id:'dc_r_L107', pool:'deadcat', kind:'real', mode:'and', label:'MA200 이격도%<-28.66 + DI 하락우위 + DI 투매소진(강추세)',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'diBear',type:'bin'}, {key:'diRebound',type:'bin'}], src:{n:53,late:0.0765,n10:0.8302,surv:0.7528,lens:0.8491,retLens:0.0873,h1:0.97,h2:0.53}},
+  {id:'dc_r_L108', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:338,late:0.0708,n10:0.7485,surv:0.6757,lens:0.7515,retLens:0.0872,h1:0.78,h2:0.7}},
+  {id:'dc_r_L109', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + MACD 영선아래',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'macdBelow0',type:'bin'}], src:{n:338,late:0.0708,n10:0.7485,surv:0.6757,lens:0.7515,retLens:0.0872,h1:0.78,h2:0.7}},
+  {id:'dc_r_L110', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + Stoch %K<7.95 + MA5 기울기%<-3.61',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:122,late:0.0732,n10:0.8033,surv:0.7148,lens:0.7623,retLens:0.0871,h1:0.79,h2:0.73}},
+  {id:'dc_r_L111', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + 엔벨로프 하단이탈',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'envDn',type:'bin'}], src:{n:336,late:0.0706,n10:0.747,surv:0.6738,lens:0.75,retLens:0.0871,h1:0.78,h2:0.7}},
+  {id:'dc_r_L112', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA20 이격도%<-7.12 + MACD 영선아래',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'macdBelow0',type:'bin'}], src:{n:267,late:0.0735,n10:0.7491,surv:0.6963,lens:0.7453,retLens:0.0868,h1:0.82,h2:0.63}},
+  {id:'dc_r_L113', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA5 기울기%<-3.61 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'nearSup',type:'bin'}], src:{n:174,late:0.0741,n10:0.7701,surv:0.6891,lens:0.7414,retLens:0.0866,h1:0.77,h2:0.71}},
+  {id:'dc_r_L114', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + MFI(자금흐름)<35.82',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:243,late:0.072,n10:0.7695,surv:0.6905,lens:0.7531,retLens:0.0865,h1:0.86,h2:0.62}},
+  {id:'dc_r_L115', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + VR(거래량비율)<60.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:197,late:0.0708,n10:0.7868,surv:0.7041,lens:0.7817,retLens:0.0856,h1:0.88,h2:0.64}},
+  {id:'dc_r_L116', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-7.12 + MA120 이격도%<-20.38 + 슬로우스토 골든',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'stochSlowGc',type:'bin'}], src:{n:64,late:0.0781,n10:0.75,surv:0.6828,lens:0.7344,retLens:0.0855,h1:0.77,h2:0.69}},
+  {id:'dc_r_L117', pool:'deadcat', kind:'real', mode:'and', label:'MA120 이격도%<-20.38 + MA200 이격도%<-28.66 + DI 투매소진(강추세)',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'diRebound',type:'bin'}], src:{n:52,late:0.0761,n10:0.8269,surv:0.7481,lens:0.8462,retLens:0.0852,h1:0.97,h2:0.53}},
+  {id:'dc_r_L118', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + MA120 이격도%<-20.38 + MA5 기울기%<-3.61',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:220,late:0.0715,n10:0.7909,surv:0.6973,lens:0.7682,retLens:0.0848,h1:0.86,h2:0.66}},
+  {id:'dc_r_L120', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA120 이격도%<-20.38 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'nearSup',type:'bin'}], src:{n:163,late:0.0732,n10:0.7362,surv:0.7135,lens:0.7423,retLens:0.0847,h1:0.75,h2:0.74}},
+  {id:'dc_r_L121', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + DI 하락우위',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'diBear',type:'bin'}], src:{n:327,late:0.0708,n10:0.7554,surv:0.6804,lens:0.7615,retLens:0.0846,h1:0.8,h2:0.7}},
+  {id:'dc_r_L122', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + Stoch %K<7.95 + MA120 이격도%<-20.38',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev120',type:'num',dir:'lt',th:-20.38}], src:{n:105,late:0.0751,n10:0.7905,surv:0.7562,lens:0.7714,retLens:0.0843,h1:0.78,h2:0.76}},
+  {id:'dc_r_L123', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.07 + MA120 이격도%<-20.38 + MA5 기울기%<-3.61',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.07}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:195,late:0.0677,n10:0.7846,surv:0.6903,lens:0.759,retLens:0.084,h1:0.84,h2:0.67}},
+  {id:'dc_r_L124', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + MA120 이격도%<-20.38 + VR(거래량비율)<60.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:125,late:0.0715,n10:0.776,surv:0.7144,lens:0.792,retLens:0.0836,h1:0.9,h2:0.73}},
+  {id:'dc_r_L125', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + VR(거래량비율)<60.95 + 엔벨로프 하단이탈',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'vr',type:'num',dir:'lt',th:60.95}, {key:'envDn',type:'bin'}], src:{n:252,late:0.0651,n10:0.7619,surv:0.6762,lens:0.7698,retLens:0.0833,h1:0.86,h2:0.67}},
+  {id:'dc_r_L126', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + BB %B<0.07',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'bbPctB',type:'num',dir:'lt',th:0.07}], src:{n:227,late:0.0622,n10:0.7753,surv:0.6793,lens:0.7709,retLens:0.083,h1:0.83,h2:0.67}},
+  {id:'dc_r_L127', pool:'deadcat', kind:'real', mode:'and', label:'MA60 이격도%<-12.44 + MA200 이격도%<-28.66 + 슬로우스토 골든',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'stochSlowGc',type:'bin'}], src:{n:82,late:0.0698,n10:0.7439,surv:0.6549,lens:0.7439,retLens:0.0826,h1:0.84,h2:0.61}},
+  {id:'dc_r_L128', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA20 이격도%<-7.12 + MA200 이격도%<-28.66',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:305,late:0.0693,n10:0.7508,surv:0.6725,lens:0.7475,retLens:0.0825,h1:0.78,h2:0.68}},
+  {id:'dc_r_L129', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + RSI 상승다이버전스',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'rsiDiv',type:'bin'}], src:{n:78,late:0.0624,n10:0.7949,surv:0.6962,lens:0.7949,retLens:0.082,h1:0.76,h2:0.84}},
+  {id:'dc_r_L130', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + DI 하락우위',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'diBear',type:'bin'}], src:{n:328,late:0.0653,n10:0.75,surv:0.6878,lens:0.75,retLens:0.0818,h1:0.81,h2:0.66}},
+  {id:'dc_r_L131', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + BB %B<0.07',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'bbPctB',type:'num',dir:'lt',th:0.07}], src:{n:280,late:0.0577,n10:0.7643,surv:0.6575,lens:0.7643,retLens:0.0812,h1:0.84,h2:0.67}},
+  {id:'dc_r_L132', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA60 이격도%<-12.44 + MA200 이격도%<-28.66',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:308,late:0.0675,n10:0.7403,surv:0.675,lens:0.7435,retLens:0.0811,h1:0.77,h2:0.69}},
+  {id:'dc_r_L133', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + Stoch %K<7.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'stochK',type:'num',dir:'lt',th:7.95}], src:{n:203,late:0.0612,n10:0.798,surv:0.6966,lens:0.7783,retLens:0.0806,h1:0.84,h2:0.7}},
+  {id:'dc_r_L134', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}], src:{n:336,late:0.064,n10:0.744,surv:0.6854,lens:0.744,retLens:0.0804,h1:0.8,h2:0.66}},
+  {id:'dc_r_L135', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + 엔벨로프 하단이탈',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'envDn',type:'bin'}], src:{n:320,late:0.065,n10:0.7344,surv:0.6909,lens:0.7344,retLens:0.08,h1:0.79,h2:0.65}},
+  {id:'dc_r_L136', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + MACD 영선아래',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'macdBelow0',type:'bin'}], src:{n:334,late:0.0636,n10:0.7425,surv:0.6835,lens:0.7425,retLens:0.0798,h1:0.8,h2:0.66}},
+  {id:'dc_r_L137', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + PSAR 하락',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'sarBear',type:'bin'}], src:{n:326,late:0.0639,n10:0.7423,surv:0.6813,lens:0.7423,retLens:0.0797,h1:0.8,h2:0.65}},
+  {id:'dc_r_L138', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA120 이격도%<-20.38 + MA5 기울기%<-3.61',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:281,late:0.0689,n10:0.7544,surv:0.6968,lens:0.7402,retLens:0.0792,h1:0.81,h2:0.66}},
+  {id:'dc_r_L139', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-7.12 + MA200 이격도%<-28.66 + MFI(자금흐름)<35.82',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:241,late:0.0692,n10:0.7427,surv:0.6635,lens:0.7344,retLens:0.079,h1:0.78,h2:0.67}},
+  {id:'dc_r_L140', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + OBV 상승다이버전스',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'obvDiv',type:'bin'}], src:{n:51,late:0.0461,n10:0.8039,surv:0.6843,lens:0.8235,retLens:0.0786,h1:0.84,h2:0.79}},
+  {id:'dc_r_L142', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + BB %B<0.07 + Stoch %K<7.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'bbPctB',type:'num',dir:'lt',th:0.07}, {key:'stochK',type:'num',dir:'lt',th:7.95}], src:{n:219,late:0.0577,n10:0.7717,surv:0.6689,lens:0.7534,retLens:0.0778,h1:0.82,h2:0.67}},
+  {id:'dc_r_L144', pool:'deadcat', kind:'real', mode:'and', label:'MA60 이격도%<-12.44 + MA120 이격도%<-20.38 + DI 투매소진(강추세)',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'diRebound',type:'bin'}], src:{n:56,late:0.068,n10:0.75,surv:0.7393,lens:0.7679,retLens:0.0772,h1:0.92,h2:0.44}},
+  {id:'dc_r_L145', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'nearSup',type:'bin'}], src:{n:267,late:0.0618,n10:0.7491,surv:0.6936,lens:0.7378,retLens:0.0766,h1:0.79,h2:0.68}},
+  {id:'dc_r_L146', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'nearSup',type:'bin'}], src:{n:280,late:0.0557,n10:0.7679,surv:0.6611,lens:0.7571,retLens:0.0763,h1:0.83,h2:0.68}},
+  {id:'dc_r_L147', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + Stoch %K<7.95',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}], src:{n:200,late:0.0612,n10:0.78,surv:0.7085,lens:0.775,retLens:0.0761,h1:0.82,h2:0.72}},
+  {id:'dc_r_L149', pool:'deadcat', kind:'real', mode:'and', label:'MA120 이격도%<-20.38 + DI 투매소진(강추세)',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'diRebound',type:'bin'}], src:{n:60,late:0.0703,n10:0.7667,surv:0.7533,lens:0.7833,retLens:0.0753,h1:0.93,h2:0.44}},
+  {id:'dc_r_L150', pool:'deadcat', kind:'real', mode:'and', label:'ADX>23.35 + MA120 이격도%<-20.38 + DI 투매소진(강추세)',
+   conds:[{key:'adx',type:'num',dir:'gt',th:23.35}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'diRebound',type:'bin'}], src:{n:60,late:0.0703,n10:0.7667,surv:0.7533,lens:0.7833,retLens:0.0753,h1:0.93,h2:0.44}},
+  {id:'dc_r_L151', pool:'deadcat', kind:'real', mode:'and', label:'MA120 이격도%<-20.38 + MACD 영선아래 + DI 투매소진(강추세)',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'macdBelow0',type:'bin'}, {key:'diRebound',type:'bin'}], src:{n:60,late:0.0703,n10:0.7667,surv:0.7533,lens:0.7833,retLens:0.0753,h1:0.93,h2:0.44}},
+  {id:'dc_r_L152', pool:'deadcat', kind:'real', mode:'and', label:'MA120 이격도%<-20.38 + DI 하락우위 + DI 투매소진(강추세)',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'diBear',type:'bin'}, {key:'diRebound',type:'bin'}], src:{n:60,late:0.0703,n10:0.7667,surv:0.7533,lens:0.7833,retLens:0.0753,h1:0.93,h2:0.44}},
+  {id:'dc_r_L153', pool:'deadcat', kind:'real', mode:'and', label:'MA60 이격도%<-12.44 + MA200 이격도%<-28.66 + MFI(자금흐름)<35.82',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:280,late:0.0627,n10:0.7393,surv:0.6536,lens:0.7393,retLens:0.0745,h1:0.79,h2:0.68}},
+  {id:'dc_r_L154', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + CCI<-135.72 + ADX>23.35',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'adx',type:'num',dir:'gt',th:23.35}], src:{n:119,late:0.055,n10:0.7647,surv:0.6697,lens:0.7647,retLens:0.0731,h1:0.85,h2:0.67}},
+  {id:'dc_r_L155', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + RSI<36.8 + Stoch %K<7.95',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}], src:{n:420,late:0.0507,n10:0.7571,surv:0.6617,lens:0.7571,retLens:0.0727,h1:0.81,h2:0.68}},
+  {id:'dc_r_L158', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA60 이격도%<-12.44 + MA5 기울기%<-3.61',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:367,late:0.0633,n10:0.7466,surv:0.6831,lens:0.7384,retLens:0.0717,h1:0.83,h2:0.61}},
+  {id:'dc_r_L159', pool:'deadcat', kind:'real', mode:'and', label:'MA200 이격도%<-28.66 + MFI(자금흐름)<35.82 + VR(거래량비율)<60.95',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'mfi',type:'num',dir:'lt',th:35.82}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:203,late:0.0585,n10:0.7488,surv:0.666,lens:0.7685,retLens:0.0715,h1:0.86,h2:0.69}},
+  {id:'dc_r_L160', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-135.72 + Stoch %K<7.95 + MA20 이격도%<-7.12',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-135.72}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev20',type:'num',dir:'lt',th:-7.12}], src:{n:352,late:0.0572,n10:0.7841,surv:0.6858,lens:0.767,retLens:0.0711,h1:0.83,h2:0.66}},
+  {id:'dc_r_L161', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + Stoch %K<7.95 + MFI(자금흐름)<35.82',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:162,late:0.0578,n10:0.7593,surv:0.684,lens:0.7346,retLens:0.0701,h1:0.83,h2:0.65}},
+  {id:'dc_r_L162', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA120 이격도%<-20.38 + MA5 기울기%<-3.61',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}], src:{n:189,late:0.0581,n10:0.7672,surv:0.6857,lens:0.746,retLens:0.0696,h1:0.81,h2:0.68}},
+  {id:'dc_r_L164', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + Stoch %K<7.95 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'nearSup',type:'bin'}], src:{n:253,late:0.0526,n10:0.7431,surv:0.6676,lens:0.7391,retLens:0.0693,h1:0.78,h2:0.69}},
+  {id:'dc_r_L165', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA200 이격도%<-28.66 + VR(거래량비율)<60.95',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev200',type:'num',dir:'lt',th:-28.66}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:194,late:0.058,n10:0.7165,surv:0.6649,lens:0.7423,retLens:0.0691,h1:0.77,h2:0.71}},
+  {id:'dc_r_L167', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + Stoch %K<7.95 + MA60 이격도%<-12.44',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:307,late:0.0572,n10:0.7557,surv:0.6873,lens:0.7459,retLens:0.0684,h1:0.83,h2:0.65}},
+  {id:'dc_r_L168', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA20 이격도%<-7.12 + VR(거래량비율)<60.95',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:219,late:0.0559,n10:0.7626,surv:0.6845,lens:0.7534,retLens:0.0683,h1:0.81,h2:0.69}},
+  {id:'dc_r_L169', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + Stoch %K<7.95 + ADX>23.35',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'adx',type:'num',dir:'gt',th:23.35}], src:{n:76,late:0.0571,n10:0.75,surv:0.7408,lens:0.7368,retLens:0.0681,h1:0.78,h2:0.69}},
+  {id:'dc_r_L170', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA60 이격도%<-12.44 + MFI(자금흐름)<35.82',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:395,late:0.0596,n10:0.7418,surv:0.6744,lens:0.7241,retLens:0.0679,h1:0.87,h2:0.58}},
+  {id:'dc_r_L171', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + ADX>23.35 + VR(거래량비율)<60.95',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:112,late:0.0576,n10:0.8125,surv:0.7545,lens:0.8125,retLens:0.0673,h1:0.84,h2:0.78}},
+  {id:'dc_r_L172', pool:'deadcat', kind:'real', mode:'and', label:'MA120 이격도%<-20.38 + MA5 기울기%<-3.61 + RSI 상승다이버전스',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'rsiDiv',type:'bin'}], src:{n:82,late:0.0513,n10:0.7683,surv:0.689,lens:0.7683,retLens:0.0672,h1:0.84,h2:0.72}},
+  {id:'dc_r_L174', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA60 이격도%<-12.44 + DI 하락우위',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'diBear',type:'bin'}], src:{n:547,late:0.0562,n10:0.7239,surv:0.6695,lens:0.7258,retLens:0.0666,h1:0.84,h2:0.59}},
+  {id:'dc_r_L175', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44 + PSAR 하락',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'sarBear',type:'bin'}], src:{n:329,late:0.053,n10:0.7416,surv:0.665,lens:0.7356,retLens:0.0665,h1:0.84,h2:0.63}},
+  {id:'dc_r_L176', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA20 이격도%<-7.12 + MA60 이격도%<-12.44',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:485,late:0.0567,n10:0.734,surv:0.6722,lens:0.7278,retLens:0.0663,h1:0.83,h2:0.59}},
+  {id:'dc_r_L177', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44 + 엔벨로프 하단이탈',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'envDn',type:'bin'}], src:{n:331,late:0.0532,n10:0.7372,surv:0.6644,lens:0.7341,retLens:0.0661,h1:0.83,h2:0.64}},
+  {id:'dc_r_L180', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44 + MA120 이격도%<-20.38',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'dev120',type:'num',dir:'lt',th:-20.38}], src:{n:247,late:0.0534,n10:0.7368,surv:0.6709,lens:0.7287,retLens:0.0656,h1:0.81,h2:0.66}},
+  {id:'dc_r_L181', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-7.12 + MFI(자금흐름)<35.82 + VR(거래량비율)<60.95',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'mfi',type:'num',dir:'lt',th:35.82}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:352,late:0.0539,n10:0.7443,surv:0.6713,lens:0.7244,retLens:0.0655,h1:0.86,h2:0.56}},
+  {id:'dc_r_L182', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}], src:{n:335,late:0.0525,n10:0.7313,surv:0.6621,lens:0.7284,retLens:0.0655,h1:0.82,h2:0.63}},
+  {id:'dc_r_L183', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44 + MACD 영선아래',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'macdBelow0',type:'bin'}], src:{n:335,late:0.0525,n10:0.7313,surv:0.6621,lens:0.7284,retLens:0.0655,h1:0.82,h2:0.63}},
+  {id:'dc_r_L186', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA60 이격도%<-12.44 + 지지선 근접',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'nearSup',type:'bin'}], src:{n:324,late:0.0532,n10:0.7377,surv:0.662,lens:0.7315,retLens:0.065,h1:0.82,h2:0.64}},
+  {id:'dc_r_L187', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + ADX>23.35 + MA200 이격도%<-28.66',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'dev200',type:'num',dir:'lt',th:-28.66}], src:{n:197,late:0.0515,n10:0.7766,surv:0.7081,lens:0.7919,retLens:0.065,h1:0.83,h2:0.73}},
+  {id:'dc_r_L189', pool:'deadcat', kind:'real', mode:'and', label:'MA60 이격도%<-12.44 + MFI(자금흐름)<35.82 + VR(거래량비율)<60.95',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'mfi',type:'num',dir:'lt',th:35.82}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:329,late:0.0544,n10:0.7477,surv:0.6833,lens:0.7508,retLens:0.0641,h1:0.9,h2:0.61}},
+  {id:'dc_r_L194', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + MA60 이격도%<-12.44 + VR(거래량비율)<60.95',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:327,late:0.0529,n10:0.7339,surv:0.6789,lens:0.7309,retLens:0.0616,h1:0.83,h2:0.62}},
+  {id:'dc_r_L195', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA120 이격도%<-20.38 + VR(거래량비율)<60.95',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'vr',type:'num',dir:'lt',th:60.95}], src:{n:138,late:0.0515,n10:0.7319,surv:0.6688,lens:0.7391,retLens:0.0613,h1:0.75,h2:0.73}},
+  {id:'dc_r_L199', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + ADX>23.35 + MFI(자금흐름)<35.82',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:169,late:0.0474,n10:0.7751,surv:0.6929,lens:0.7633,retLens:0.0605,h1:0.83,h2:0.68}},
+  {id:'dc_r_L200', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA20 이격도%<-7.12 + MFI(자금흐름)<35.82',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'dev20',type:'num',dir:'lt',th:-7.12}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:288,late:0.0507,n10:0.7465,surv:0.6622,lens:0.7326,retLens:0.0602,h1:0.82,h2:0.63}},
+  {id:'dc_r_L201', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + RSI<36.8 + ADX>23.35',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'adx',type:'num',dir:'gt',th:23.35}], src:{n:141,late:0.048,n10:0.7234,surv:0.7,lens:0.7376,retLens:0.0601,h1:0.83,h2:0.6}},
+  {id:'dc_r_L202', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC>10.9 + ADX>23.35 + MA20 이격도%<-7.12',
+   conds:[{key:'volOsc',type:'num',dir:'gt',th:10.9}, {key:'adx',type:'num',dir:'gt',th:23.35}, {key:'dev20',type:'num',dir:'lt',th:-7.12}], src:{n:144,late:0.0492,n10:0.7222,surv:0.7063,lens:0.7361,retLens:0.06,h1:0.8,h2:0.65}},
+  {id:'dc_r_L203', pool:'deadcat', kind:'real', mode:'and', label:'RSI<36.8 + Stoch %K<7.95 + MFI(자금흐름)<35.82',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:36.8}, {key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'mfi',type:'num',dir:'lt',th:35.82}], src:{n:346,late:0.0472,n10:0.7399,surv:0.65,lens:0.7283,retLens:0.0599,h1:0.79,h2:0.66}},
+  {id:'dc_r_L204', pool:'deadcat', kind:'real', mode:'and', label:'ADX>23.35 + VR(거래량비율)<60.95 + 엔벨로프 하단이탈',
+   conds:[{key:'adx',type:'num',dir:'gt',th:23.35}, {key:'vr',type:'num',dir:'lt',th:60.95}, {key:'envDn',type:'bin'}], src:{n:363,late:0.0432,n10:0.7521,surv:0.6937,lens:0.7713,retLens:0.0579,h1:0.86,h2:0.64}},
+  {id:'dc_r_L205', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<7.95 + MA5 기울기%<-3.61 + RSI 상승다이버전스',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:7.95}, {key:'ma5slope',type:'num',dir:'lt',th:-3.61}, {key:'rsiDiv',type:'bin'}], src:{n:58,late:0.047,n10:0.7759,surv:0.6879,lens:0.7586,retLens:0.0579,h1:0.71,h2:0.78}},
+  // ── deadcat · fake — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 11개 ──
+  {id:'dc_f_L01', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + 골든크로스 5×9 + DI 하락우위 + PSAR 하락',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'diBear',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:61,late:-0.017,n10:0.492,surv:0.51,lens:0.361,retLens:-0.0227,h1:0.4,h2:0.31}},
+  {id:'dc_f_L02', pool:'deadcat', kind:'fake', mode:'and', label:'MA60 이격도%<-12.44 + OBV 상승추세 + 골든크로스 5×20',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'obvUp',type:'bin'}, {key:'gx5_20',type:'bin'}], src:{n:32,late:0.0001,n10:0.5,surv:0.559,lens:0.5,retLens:-0.0144,h1:0.47,h2:0.54}},
+  {id:'dc_f_L03', pool:'deadcat', kind:'fake', mode:'and', label:'MA60 이격도%<-12.44 + OBV 상승추세 + 골든크로스 5×20 + MACD 골든크로스',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'obvUp',type:'bin'}, {key:'gx5_20',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:32,late:0.0001,n10:0.5,surv:0.559,lens:0.5,retLens:-0.0144,h1:0.47,h2:0.54}},
+  {id:'dc_f_L04', pool:'deadcat', kind:'fake', mode:'and', label:'MA60 이격도%<-12.44 + OBV 상승추세 + 골든크로스 5×20 + MACD 영선아래',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-12.44}, {key:'obvUp',type:'bin'}, {key:'gx5_20',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:32,late:0.0001,n10:0.5,surv:0.559,lens:0.5,retLens:-0.0144,h1:0.47,h2:0.54}},
+  {id:'dc_f_L05', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + 골든크로스 5×9 + PSAR 하락',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:103,late:-0.008,n10:0.524,surv:0.515,lens:0.437,retLens:-0.0144,h1:0.5,h2:0.33}},
+  {id:'dc_f_L06', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + 골든크로스 5×9 + MACD 영선아래 + PSAR 하락',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'macdBelow0',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:98,late:-0.007,n10:0.541,surv:0.527,lens:0.449,retLens:-0.0131,h1:0.49,h2:0.37}},
+  {id:'dc_f_L07', pool:'deadcat', kind:'fake', mode:'and', label:'RSI 상승다이버전스 + OBV 상승다이버전스 + 골든크로스 5×9',
+   conds:[{key:'rsiDiv',type:'bin'}, {key:'obvDiv',type:'bin'}, {key:'gx5_9',type:'bin'}], src:{n:41,late:0.0043,n10:0.488,surv:0.559,lens:0.366,retLens:-0.0097,h1:0.31,h2:0.47}},
+  {id:'dc_f_L08', pool:'deadcat', kind:'fake', mode:'and', label:'MA120 이격도%<-20.38 + OBV 상승추세 + 골든크로스 5×9 + DI 하락우위',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'obvUp',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:42,late:0.0066,n10:0.381,surv:0.505,lens:0.429,retLens:-0.0068,h1:0.5,h2:0.33}},
+  {id:'dc_f_L09', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + 골든크로스 5×9 + MACD 영선아래',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:183,late:-0.0016,n10:0.557,surv:0.533,lens:0.492,retLens:-0.0062,h1:0.47,h2:0.54}},
+  {id:'dc_f_L10', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + 골든크로스 5×9 + DI 하락우위',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:83,late:-0.0055,n10:0.578,surv:0.543,lens:0.494,retLens:-0.0061,h1:0.55,h2:0.4}},
+  {id:'dc_f_L11', pool:'deadcat', kind:'fake', mode:'and', label:'MA120 이격도%<-20.38 + 지지선 근접 + 골든크로스 5×9 + PSAR 하락',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-20.38}, {key:'nearSup',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:32,late:-0.0049,n10:0.469,surv:0.513,lens:0.438,retLens:-0.0058,h1:0.38,h2:0.47}},
+  // ── pullback · real — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 11개 ──
+  {id:'pb_r_L01', pool:'pullback', kind:'real', mode:'and', label:'Stoch %K>75.26 + ADX<14.11 + MA5 기울기%>2.07',
+   conds:[{key:'stochK',type:'num',dir:'gt',th:75.26}, {key:'adx',type:'num',dir:'lt',th:14.11}, {key:'ma5slope',type:'num',dir:'gt',th:2.07}], src:{n:206,late:0.0853,n10:0.709,surv:0.678,lens:0.772,retLens:0.138,h1:0.76,h2:0.78}},
+  {id:'pb_r_L02', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.11 + MA20 이격도%>4.03 + 골든크로스 5×20',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.11}, {key:'dev20',type:'num',dir:'gt',th:4.03}, {key:'gx5_20',type:'bin'}], src:{n:149,late:0.0879,n10:0.705,surv:0.672,lens:0.785,retLens:0.1365,h1:0.8,h2:0.78}},
+  {id:'pb_r_L03', pool:'pullback', kind:'real', mode:'and', label:'BB %B>0.82 + ADX<14.11 + MA5 기울기%>2.07',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.82}, {key:'adx',type:'num',dir:'lt',th:14.11}, {key:'ma5slope',type:'num',dir:'gt',th:2.07}], src:{n:223,late:0.0803,n10:0.7,surv:0.662,lens:0.762,retLens:0.1327,h1:0.74,h2:0.78}},
+  {id:'pb_r_L04', pool:'pullback', kind:'real', mode:'and', label:'CCI>51.82 + 골든크로스 5×20 + PSAR 하락',
+   conds:[{key:'cci',type:'num',dir:'gt',th:51.82}, {key:'gx5_20',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:64,late:0.0791,n10:0.75,surv:0.695,lens:0.75,retLens:0.1277,h1:0.63,h2:0.79}},
+  {id:'pb_r_L05', pool:'pullback', kind:'real', mode:'and', label:'BB %B>0.82 + ADX<14.11 + 골든크로스 5×20',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.82}, {key:'adx',type:'num',dir:'lt',th:14.11}, {key:'gx5_20',type:'bin'}], src:{n:195,late:0.0859,n10:0.672,surv:0.666,lens:0.754,retLens:0.1276,h1:0.69,h2:0.8}},
+  {id:'pb_r_L06', pool:'pullback', kind:'real', mode:'and', label:'CCI>51.82 + MACD 영선아래 + PSAR 하락',
+   conds:[{key:'cci',type:'num',dir:'gt',th:51.82}, {key:'macdBelow0',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:120,late:0.074,n10:0.792,surv:0.667,lens:0.808,retLens:0.1223,h1:0.78,h2:0.83}},
+  {id:'pb_r_L07', pool:'pullback', kind:'real', mode:'and', label:'MA60 이격도%<-6.55 + RSI 상승다이버전스 + PSAR 하락',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-6.55}, {key:'rsiDiv',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:257,late:0.067,n10:0.782,surv:0.663,lens:0.763,retLens:0.1217,h1:0.71,h2:0.79}},
+  {id:'pb_r_L08', pool:'pullback', kind:'real', mode:'and', label:'MA60 이격도%<-6.55 + RSI 상승다이버전스 + 지지선 근접',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-6.55}, {key:'rsiDiv',type:'bin'}, {key:'nearSup',type:'bin'}], src:{n:144,late:0.0716,n10:0.785,surv:0.677,lens:0.757,retLens:0.1174,h1:0.68,h2:0.83}},
+  {id:'pb_r_L09', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.11 + MA60 이격도%<-6.55 + RSI 상승다이버전스',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.11}, {key:'dev60',type:'num',dir:'lt',th:-6.55}, {key:'rsiDiv',type:'bin'}], src:{n:56,late:0.0938,n10:0.696,surv:0.646,lens:0.768,retLens:0.1096,h1:0.67,h2:0.88}},
+  {id:'pb_r_L10', pool:'pullback', kind:'real', mode:'and', label:'MA20 이격도%>4.03 + MACD 영선아래 + PSAR 하락',
+   conds:[{key:'dev20',type:'num',dir:'gt',th:4.03}, {key:'macdBelow0',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:56,late:0.0601,n10:0.821,surv:0.666,lens:0.75,retLens:0.1082,h1:0.85,h2:0.72}},
+  {id:'pb_r_L11', pool:'pullback', kind:'real', mode:'and', label:'RSI 상승다이버전스 + 지지선 근접 + PSAR 하락',
+   conds:[{key:'rsiDiv',type:'bin'}, {key:'nearSup',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:157,late:0.0659,n10:0.777,surv:0.668,lens:0.752,retLens:0.1072,h1:0.68,h2:0.83}},
+  // ── pullback · real 추가 [S1094] — 발굴(스냅 20260701)·KR기존11 중복2 제거 순수신규 19개. ⚠tradable:false=시즌2 매매 미사용(median 감사 0/21 통과=꼬리 잣대 미검증·등록만 보존). 시즌1 표시엔 등장. 새 꼬리 잣대로 눌림 전체 재검증 후 승격. ──
+  {id:'pb_r_L12', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'골든크로스 5×20 + MACD 영선아래 + 슬로우스토 골든',
+   conds:[{key:'gx5_20',type:'bin'}, {key:'macdBelow0',type:'bin'}, {key:'stochSlowGc',type:'bin'}], src:{n:56,late:0.0841,n10:0.7857,surv:0.6911,lens:0.7679,retLens:0.142,h1:0.71,h2:0.81}},
+  {id:'pb_r_L14', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'ADX<14.11 + 골든크로스 5×20 + 엔벨로프 상단이탈',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.11}, {key:'gx5_20',type:'bin'}, {key:'envUp',type:'bin'}], src:{n:150,late:0.0873,n10:0.7,surv:0.6707,lens:0.78,retLens:0.1355,h1:0.78,h2:0.78}},
+  {id:'pb_r_L15', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'골든크로스 5×20 + MACD 골든크로스 + 슬로우스토 골든',
+   conds:[{key:'gx5_20',type:'bin'}, {key:'macdGc',type:'bin'}, {key:'stochSlowGc',type:'bin'}], src:{n:73,late:0.0832,n10:0.7671,surv:0.6699,lens:0.7534,retLens:0.1308,h1:0.71,h2:0.79}},
+  {id:'pb_r_L18', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'BB %B>0.82 + 골든크로스 5×20 + 슬로우스토 골든',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.82}, {key:'gx5_20',type:'bin'}, {key:'stochSlowGc',type:'bin'}], src:{n:50,late:0.0929,n10:0.8,surv:0.698,lens:0.82,retLens:0.1245,h1:0.85,h2:0.8}},
+  {id:'pb_r_L22', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'MACD 영선아래 + 일목 구름위 + 일목 전환>기준',
+   conds:[{key:'macdBelow0',type:'bin'}, {key:'ichiCloudUp',type:'bin'}, {key:'ichiTK',type:'bin'}], src:{n:66,late:0.0639,n10:0.7424,surv:0.6833,lens:0.8485,retLens:0.1134,h1:0.86,h2:0.83}},
+  {id:'pb_r_L23', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'CCI>51.82 + MACD 영선아래 + 슬로우스토 골든',
+   conds:[{key:'cci',type:'num',dir:'gt',th:51.82}, {key:'macdBelow0',type:'bin'}, {key:'stochSlowGc',type:'bin'}], src:{n:127,late:0.0839,n10:0.748,surv:0.6559,lens:0.748,retLens:0.1115,h1:0.7,h2:0.79}},
+  {id:'pb_r_L24', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'CCI>51.82 + 골든크로스 5×20 + 슬로우스토 골든',
+   conds:[{key:'cci',type:'num',dir:'gt',th:51.82}, {key:'gx5_20',type:'bin'}, {key:'stochSlowGc',type:'bin'}], src:{n:55,late:0.0754,n10:0.7636,surv:0.66,lens:0.7636,retLens:0.1098,h1:0.72,h2:0.8}},
+  {id:'pb_r_L25', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'Stoch %K>75.26 + MA60 이격도%<-6.55 + DI 하락우위',
+   conds:[{key:'stochK',type:'num',dir:'gt',th:75.26}, {key:'dev60',type:'num',dir:'lt',th:-6.55}, {key:'diBear',type:'bin'}], src:{n:67,late:0.085,n10:0.791,surv:0.7478,lens:0.7612,retLens:0.1098,h1:0.83,h2:0.5}},
+  {id:'pb_r_L27', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'MACD 영선아래 + PSAR 하락 + 엔벨로프 상단이탈',
+   conds:[{key:'macdBelow0',type:'bin'}, {key:'sarBear',type:'bin'}, {key:'envUp',type:'bin'}], src:{n:62,late:0.0595,n10:0.8387,surv:0.6726,lens:0.7742,retLens:0.1089,h1:0.86,h2:0.75}},
+  {id:'pb_r_L28', pool:'pullback', kind:'real', mode:'and', tradable:false, label:'BB %B>0.82 + MACD 영선아래 + 슬로우스토 골든',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.82}, {key:'macdBelow0',type:'bin'}, {key:'stochSlowGc',type:'bin'}], src:{n:120,late:0.0725,n10:0.7417,surv:0.66,lens:0.7667,retLens:0.1082,h1:0.8,h2:0.74}},
+
+  // ── pullback · fake — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 2개 ──
+  {id:'pb_f_L01', pool:'pullback', kind:'fake', mode:'and', label:'MA120 이격도%<-2.45 + OBV 상승다이버전스 + BB 스퀴즈 + MACD 골든크로스',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-2.45}, {key:'obvDiv',type:'bin'}, {key:'squeeze',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:46,late:-0.0067,n10:0.587,surv:0.537,lens:0.457,retLens:-0.009,h1:0.52,h2:0.38}},
+  {id:'pb_f_L02', pool:'pullback', kind:'fake', mode:'and', label:'BB %B>0.82 + OBV 상승추세 + BB 스퀴즈 + DI 하락우위',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.82}, {key:'obvUp',type:'bin'}, {key:'squeeze',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:36,late:0.0077,n10:0.5,surv:0.525,lens:0.444,retLens:-0.0072,h1:0.48,h2:0.38}},
+  ],
+  us: [
+  // ── deadcat · real — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 12개 ──
+  {id:'dc_r_L01', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-24.77 + BB %B>0.77 + 골든크로스 5×20',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-24.77}, {key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'gx5_20',type:'bin'}], src:{n:61,late:0.0663,n10:0.803,surv:0.731,lens:0.82,retLens:0.1032,h1:0.95,h2:0.55}},
+  {id:'dc_r_L02', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-24.77 + Stoch %K>84.74 + 골든크로스 5×9',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-24.77}, {key:'stochK',type:'num',dir:'gt',th:84.74}, {key:'gx5_9',type:'bin'}], src:{n:59,late:0.0475,n10:0.763,surv:0.715,lens:0.814,retLens:0.0885,h1:0.87,h2:0.58}},
+  {id:'dc_r_L03', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-24.77 + MA60 이격도%<-13 + VR(거래량비율)<100.43',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-24.77}, {key:'dev60',type:'num',dir:'lt',th:-13}, {key:'vr',type:'num',dir:'lt',th:100.43}], src:{n:76,late:0.0678,n10:0.776,surv:0.709,lens:0.763,retLens:0.0778,h1:0.74,h2:0.78}},
+  {id:'dc_r_L04', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-24.77 + MA200 이격도%<-26.2 + VR(거래량비율)<100.43',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-24.77}, {key:'dev200',type:'num',dir:'lt',th:-26.2}, {key:'vr',type:'num',dir:'lt',th:100.43}], src:{n:79,late:0.0654,n10:0.709,surv:0.658,lens:0.684,retLens:0.0731,h1:0.82,h2:0.59}},
+  {id:'dc_r_L05', pool:'deadcat', kind:'real', mode:'and', label:'ADX>24.5 + MA20 이격도%<-6.78 + MA200 이격도%<-26.2',
+   conds:[{key:'adx',type:'num',dir:'gt',th:24.5}, {key:'dev20',type:'num',dir:'lt',th:-6.78}, {key:'dev200',type:'num',dir:'lt',th:-26.2}], src:{n:280,late:0.0445,n10:0.711,surv:0.627,lens:0.754,retLens:0.068,h1:0.87,h2:0.68}},
+  {id:'dc_r_L06', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-24.77 + MA120 이격도%<-20.42 + VR(거래량비율)<100.43',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-24.77}, {key:'dev120',type:'num',dir:'lt',th:-20.42}, {key:'vr',type:'num',dir:'lt',th:100.43}], src:{n:81,late:0.0625,n10:0.716,surv:0.663,lens:0.691,retLens:0.0671,h1:0.8,h2:0.64}},
+  {id:'dc_r_L07', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-6.78 + MA120 이격도%<-20.42 + VR(거래량비율)<100.43',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-6.78}, {key:'dev120',type:'num',dir:'lt',th:-20.42}, {key:'vr',type:'num',dir:'lt',th:100.43}], src:{n:419,late:0.041,n10:0.699,surv:0.627,lens:0.737,retLens:0.066,h1:0.86,h2:0.66}},
+  {id:'dc_r_L08', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K>84.74 + MA5 기울기%>2.6 + VR(거래량비율)<100.43',
+   conds:[{key:'stochK',type:'num',dir:'gt',th:84.74}, {key:'ma5slope',type:'num',dir:'gt',th:2.6}, {key:'vr',type:'num',dir:'lt',th:100.43}], src:{n:122,late:0.0382,n10:0.664,surv:0.674,lens:0.664,retLens:0.0645,h1:0.76,h2:0.55}},
+  {id:'dc_r_L09', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-24.77 + ADX>24.5 + MA60 이격도%<-13',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-24.77}, {key:'adx',type:'num',dir:'gt',th:24.5}, {key:'dev60',type:'num',dir:'lt',th:-13}], src:{n:72,late:0.0548,n10:0.708,surv:0.671,lens:0.694,retLens:0.0548,h1:0.75,h2:0.66}},
+  {id:'dc_r_L10', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-24.77 + CCI>66.29 + ADX>24.5',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-24.77}, {key:'cci',type:'num',dir:'gt',th:66.29}, {key:'adx',type:'num',dir:'gt',th:24.5}], src:{n:51,late:0.0322,n10:0.706,surv:0.678,lens:0.725,retLens:0.0477,h1:0.96,h2:0.52}},
+  {id:'dc_r_L11', pool:'deadcat', kind:'real', mode:'and', label:'RSI<33.77 + MA20 이격도%<-6.78 + RSI 상승다이버전스',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:33.77}, {key:'dev20',type:'num',dir:'lt',th:-6.78}, {key:'rsiDiv',type:'bin'}], src:{n:57,late:0.0417,n10:0.719,surv:0.711,lens:0.667,retLens:0.0455,h1:0.8,h2:0.64}},
+  {id:'dc_r_L12', pool:'deadcat', kind:'real', mode:'and', label:'RSI 상승다이버전스 + 지지선 근접 + MACD 골든크로스',
+   conds:[{key:'rsiDiv',type:'bin'}, {key:'nearSup',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:58,late:0.032,n10:0.672,surv:0.667,lens:0.707,retLens:0.039,h1:1,h2:0.65}},
+  // ── deadcat · fake — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 40개 ──
+  {id:'dc_f_L01', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승추세 + BB 스퀴즈 + 골든크로스 5×60',
+   conds:[{key:'obvUp',type:'bin'}, {key:'squeeze',type:'bin'}, {key:'gx5_60',type:'bin'}], src:{n:65,late:-0.026,n10:0.323,surv:0.414,lens:0.292,retLens:-0.0289,h1:0.42,h2:0.14}},
+  {id:'dc_f_L02', pool:'deadcat', kind:'fake', mode:'and', label:'ADX>24.5 + MA5 기울기%>2.6 + MFI(자금흐름)>63.7 + 골든크로스 5×20',
+   conds:[{key:'adx',type:'num',dir:'gt',th:24.5}, {key:'ma5slope',type:'num',dir:'gt',th:2.6}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'gx5_20',type:'bin'}], src:{n:48,late:-0.0096,n10:0.292,surv:0.475,lens:0.333,retLens:-0.0229,h1:0.36,h2:0.32}},
+  {id:'dc_f_L03', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승추세 + BB 스퀴즈 + 골든크로스 5×60 + MACD 골든크로스',
+   conds:[{key:'obvUp',type:'bin'}, {key:'squeeze',type:'bin'}, {key:'gx5_60',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:49,late:-0.018,n10:0.327,surv:0.422,lens:0.265,retLens:-0.0209,h1:0.37,h2:0.14}},
+  {id:'dc_f_L04', pool:'deadcat', kind:'fake', mode:'and', label:'MFI(자금흐름)>63.7 + BB 스퀴즈 + PSAR 하락',
+   conds:[{key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:32,late:-0.011,n10:0.375,surv:0.456,lens:0.375,retLens:-0.0204,h1:0.43,h2:0.33}},
+  {id:'dc_f_L05', pool:'deadcat', kind:'fake', mode:'and', label:'지지선 근접 + 골든크로스 5×9 + MACD 영선아래 + PSAR 하락',
+   conds:[{key:'nearSup',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'macdBelow0',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:120,late:-0.0142,n10:0.467,surv:0.486,lens:0.442,retLens:-0.0203,h1:0.47,h2:0.43}},
+  {id:'dc_f_L06', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승추세 + BB 스퀴즈 + 골든크로스 5×60 + MA20 돌파안착(상승)',
+   conds:[{key:'obvUp',type:'bin'}, {key:'squeeze',type:'bin'}, {key:'gx5_60',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:45,late:-0.016,n10:0.356,surv:0.462,lens:0.311,retLens:-0.0165,h1:0.38,h2:0.19}},
+  {id:'dc_f_L07', pool:'deadcat', kind:'fake', mode:'and', label:'지지선 근접 + 골든크로스 5×9 + DI 하락우위 + PSAR 하락',
+   conds:[{key:'nearSup',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'diBear',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:127,late:-0.0124,n10:0.457,surv:0.48,lens:0.457,retLens:-0.0161,h1:0.48,h2:0.44}},
+  {id:'dc_f_L08', pool:'deadcat', kind:'fake', mode:'and', label:'지지선 근접 + 골든크로스 5×9 + PSAR 하락',
+   conds:[{key:'nearSup',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:130,late:-0.0121,n10:0.454,surv:0.476,lens:0.454,retLens:-0.0159,h1:0.48,h2:0.44}},
+  {id:'dc_f_L09', pool:'deadcat', kind:'fake', mode:'and', label:'거래량 OSC<-24.77 + DI 하락우위 + PSAR 하락',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-24.77}, {key:'diBear',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:289,late:-0.007,n10:0.446,surv:0.48,lens:0.433,retLens:-0.0158,h1:0.45,h2:0.42}},
+  {id:'dc_f_L10', pool:'deadcat', kind:'fake', mode:'and', label:'MFI(자금흐름)>63.7 + BB 스퀴즈 + 골든크로스 5×9 + MA20 돌파안착(상승)',
+   conds:[{key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:32,late:-0.0146,n10:0.344,surv:0.416,lens:0.313,retLens:-0.0154,h1:0.39,h2:0.21}},
+  {id:'dc_f_L11', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B>0.77 + OBV 상승추세 + BB 스퀴즈 + 골든크로스 5×60',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'obvUp',type:'bin'}, {key:'squeeze',type:'bin'}, {key:'gx5_60',type:'bin'}], src:{n:37,late:-0.0138,n10:0.351,surv:0.465,lens:0.297,retLens:-0.0151,h1:0.38,h2:0.09}},
+  {id:'dc_f_L12', pool:'deadcat', kind:'fake', mode:'and', label:'ADX>24.5 + OBV 상승추세 + 골든크로스 5×9 + PSAR 하락',
+   conds:[{key:'adx',type:'num',dir:'gt',th:24.5}, {key:'obvUp',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:51,late:-0.0047,n10:0.353,surv:0.482,lens:0.333,retLens:-0.0148,h1:0.31,h2:0.36}},
+  {id:'dc_f_L13', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B>0.77 + BB 스퀴즈 + 골든크로스 5×60 + MA20 돌파안착(상승)',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'squeeze',type:'bin'}, {key:'gx5_60',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:40,late:-0.0156,n10:0.325,surv:0.423,lens:0.3,retLens:-0.0148,h1:0.36,h2:0.2}},
+  {id:'dc_f_L14', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B>0.77 + BB 스퀴즈 + 골든크로스 5×60 + MACD 골든크로스',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'squeeze',type:'bin'}, {key:'gx5_60',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:43,late:-0.0149,n10:0.326,surv:0.414,lens:0.326,retLens:-0.0132,h1:0.39,h2:0.2}},
+  {id:'dc_f_L15', pool:'deadcat', kind:'fake', mode:'and', label:'CCI>66.29 + BB %B>0.77 + BB 스퀴즈 + 골든크로스 5×60',
+   conds:[{key:'cci',type:'num',dir:'gt',th:66.29}, {key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'squeeze',type:'bin'}, {key:'gx5_60',type:'bin'}], src:{n:44,late:-0.0142,n10:0.341,surv:0.423,lens:0.341,retLens:-0.0128,h1:0.41,h2:0.2}},
+  {id:'dc_f_L16', pool:'deadcat', kind:'fake', mode:'and', label:'MFI(자금흐름)>63.7 + OBV 상승추세 + DI 하락우위 + PSAR 하락',
+   conds:[{key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'obvUp',type:'bin'}, {key:'diBear',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:53,late:-0.0056,n10:0.34,surv:0.436,lens:0.415,retLens:-0.0122,h1:0.46,h2:0.4}},
+  {id:'dc_f_L17', pool:'deadcat', kind:'fake', mode:'and', label:'VR(거래량비율)<100.43 + OBV 상승추세 + 골든크로스 5×9 + PSAR 하락',
+   conds:[{key:'vr',type:'num',dir:'lt',th:100.43}, {key:'obvUp',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:59,late:-0.0046,n10:0.492,surv:0.532,lens:0.424,retLens:-0.0121,h1:0.37,h2:0.5}},
+  {id:'dc_f_L18', pool:'deadcat', kind:'fake', mode:'and', label:'BB 스퀴즈 + 골든크로스 5×60 + MA20 돌파안착(상승) + MACD 골든크로스',
+   conds:[{key:'squeeze',type:'bin'}, {key:'gx5_60',type:'bin'}, {key:'settle20',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:49,late:-0.0144,n10:0.367,surv:0.435,lens:0.327,retLens:-0.0121,h1:0.41,h2:0.2}},
+  {id:'dc_f_L19', pool:'deadcat', kind:'fake', mode:'and', label:'RSI 상승다이버전스 + OBV 상승추세 + PSAR 하락',
+   conds:[{key:'rsiDiv',type:'bin'}, {key:'obvUp',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:110,late:-0.0071,n10:0.509,surv:0.474,lens:0.445,retLens:-0.0115,h1:0.49,h2:0.42}},
+  {id:'dc_f_L20', pool:'deadcat', kind:'fake', mode:'and', label:'RSI 상승다이버전스 + OBV 상승추세 + MACD 영선아래 + PSAR 하락',
+   conds:[{key:'rsiDiv',type:'bin'}, {key:'obvUp',type:'bin'}, {key:'macdBelow0',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:110,late:-0.0071,n10:0.509,surv:0.474,lens:0.445,retLens:-0.0115,h1:0.49,h2:0.42}},
+  {id:'dc_f_L21', pool:'deadcat', kind:'fake', mode:'and', label:'ADX>24.5 + OBV 상승추세 + MACD 골든크로스 + PSAR 하락',
+   conds:[{key:'adx',type:'num',dir:'gt',th:24.5}, {key:'obvUp',type:'bin'}, {key:'macdGc',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:135,late:-0.0044,n10:0.4,surv:0.476,lens:0.378,retLens:-0.0113,h1:0.38,h2:0.38}},
+  {id:'dc_f_L22', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승추세 + 지지선 근접 + PSAR 하락',
+   conds:[{key:'obvUp',type:'bin'}, {key:'nearSup',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:81,late:-0.0093,n10:0.457,surv:0.489,lens:0.42,retLens:-0.0101,h1:0.35,h2:0.5}},
+  {id:'dc_f_L23', pool:'deadcat', kind:'fake', mode:'and', label:'CCI>66.29 + MFI(자금흐름)>63.7 + BB 스퀴즈 + 골든크로스 5×9',
+   conds:[{key:'cci',type:'num',dir:'gt',th:66.29}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}, {key:'gx5_9',type:'bin'}], src:{n:30,late:-0.0102,n10:0.367,surv:0.433,lens:0.333,retLens:-0.0095,h1:0.41,h2:0.23}},
+  {id:'dc_f_L24', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B>0.77 + MFI(자금흐름)>63.7 + BB 스퀴즈',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}], src:{n:72,late:-0.008,n10:0.389,surv:0.464,lens:0.333,retLens:-0.009,h1:0.41,h2:0.21}},
+  {id:'dc_f_L25', pool:'deadcat', kind:'fake', mode:'and', label:'CCI>66.29 + BB %B>0.77 + MFI(자금흐름)>63.7 + BB 스퀴즈',
+   conds:[{key:'cci',type:'num',dir:'gt',th:66.29}, {key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}], src:{n:72,late:-0.008,n10:0.389,surv:0.464,lens:0.333,retLens:-0.009,h1:0.41,h2:0.21}},
+  {id:'dc_f_L26', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B>0.77 + MFI(자금흐름)>63.7 + BB 스퀴즈 + MACD 골든크로스',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:72,late:-0.008,n10:0.389,surv:0.464,lens:0.333,retLens:-0.009,h1:0.41,h2:0.21}},
+  {id:'dc_f_L27', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B>0.77 + MFI(자금흐름)>63.7 + BB 스퀴즈 + MA20 돌파안착(상승)',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:71,late:-0.0081,n10:0.38,surv:0.463,lens:0.338,retLens:-0.0088,h1:0.42,h2:0.21}},
+  {id:'dc_f_L28', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승추세 + 골든크로스 5×9 + MACD 골든크로스 + PSAR 하락',
+   conds:[{key:'obvUp',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'macdGc',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:119,late:0.002,n10:0.471,surv:0.524,lens:0.437,retLens:-0.0085,h1:0.39,h2:0.48}},
+  {id:'dc_f_L29', pool:'deadcat', kind:'fake', mode:'and', label:'ADX>24.5 + MFI(자금흐름)>63.7 + 골든크로스 5×9 + MACD 영선아래',
+   conds:[{key:'adx',type:'num',dir:'gt',th:24.5}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'gx5_9',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:40,late:-0.0006,n10:0.3,surv:0.457,lens:0.35,retLens:-0.0083,h1:0.31,h2:0.37}},
+  {id:'dc_f_L30', pool:'deadcat', kind:'fake', mode:'and', label:'Stoch %K>84.74 + RSI 상승다이버전스',
+   conds:[{key:'stochK',type:'num',dir:'gt',th:84.74}, {key:'rsiDiv',type:'bin'}], src:{n:90,late:-0.006,n10:0.478,surv:0.523,lens:0.444,retLens:-0.0083,h1:0.41,h2:0.46}},
+  {id:'dc_f_L31', pool:'deadcat', kind:'fake', mode:'and', label:'Stoch %K>84.74 + RSI 상승다이버전스 + MACD 골든크로스',
+   conds:[{key:'stochK',type:'num',dir:'gt',th:84.74}, {key:'rsiDiv',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:90,late:-0.006,n10:0.478,surv:0.523,lens:0.444,retLens:-0.0083,h1:0.41,h2:0.46}},
+  {id:'dc_f_L32', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B>0.77 + MFI(자금흐름)>63.7 + OBV 상승추세 + BB 스퀴즈',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.77}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'obvUp',type:'bin'}, {key:'squeeze',type:'bin'}], src:{n:69,late:-0.0079,n10:0.391,surv:0.459,lens:0.333,retLens:-0.0082,h1:0.4,h2:0.23}},
+  {id:'dc_f_L33', pool:'deadcat', kind:'fake', mode:'and', label:'MFI(자금흐름)>63.7 + BB 스퀴즈 + MA20 돌파안착(상승)',
+   conds:[{key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:86,late:-0.0062,n10:0.407,surv:0.479,lens:0.36,retLens:-0.0074,h1:0.43,h2:0.24}},
+  {id:'dc_f_L34', pool:'deadcat', kind:'fake', mode:'and', label:'MFI(자금흐름)>63.7 + OBV 상승추세 + BB 스퀴즈 + MA20 돌파안착(상승)',
+   conds:[{key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'obvUp',type:'bin'}, {key:'squeeze',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:79,late:-0.0062,n10:0.418,surv:0.484,lens:0.367,retLens:-0.007,h1:0.45,h2:0.23}},
+  {id:'dc_f_L35', pool:'deadcat', kind:'fake', mode:'and', label:'CCI>66.29 + MFI(자금흐름)>63.7 + BB 스퀴즈 + MACD 골든크로스',
+   conds:[{key:'cci',type:'num',dir:'gt',th:66.29}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:81,late:-0.0057,n10:0.407,surv:0.479,lens:0.358,retLens:-0.0069,h1:0.43,h2:0.21}},
+  {id:'dc_f_L36', pool:'deadcat', kind:'fake', mode:'and', label:'CCI>66.29 + MFI(자금흐름)>63.7 + BB 스퀴즈',
+   conds:[{key:'cci',type:'num',dir:'gt',th:66.29}, {key:'mfi',type:'num',dir:'gt',th:63.7}, {key:'squeeze',type:'bin'}], src:{n:82,late:-0.0052,n10:0.415,surv:0.483,lens:0.366,retLens:-0.0067,h1:0.44,h2:0.21}},
+  {id:'dc_f_L37', pool:'deadcat', kind:'fake', mode:'and', label:'CCI>66.29 + Stoch %K>84.74 + RSI 상승다이버전스 + MACD 영선아래',
+   conds:[{key:'cci',type:'num',dir:'gt',th:66.29}, {key:'stochK',type:'num',dir:'gt',th:84.74}, {key:'rsiDiv',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:65,late:-0.0054,n10:0.523,surv:0.54,lens:0.446,retLens:-0.0065,h1:0.43,h2:0.45}},
+  {id:'dc_f_L38', pool:'deadcat', kind:'fake', mode:'and', label:'Stoch %K>84.74 + RSI 상승다이버전스 + MACD 영선아래',
+   conds:[{key:'stochK',type:'num',dir:'gt',th:84.74}, {key:'rsiDiv',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:74,late:-0.005,n10:0.514,surv:0.543,lens:0.459,retLens:-0.0062,h1:0.41,h2:0.48}},
+  {id:'dc_f_L39', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + 지지선 근접 + BB 스퀴즈 + PSAR 하락',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'nearSup',type:'bin'}, {key:'squeeze',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:54,late:-0.003,n10:0.444,surv:0.489,lens:0.407,retLens:-0.0054,h1:0.47,h2:0.38}},
+  {id:'dc_f_L40', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + 지지선 근접 + BB 스퀴즈',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'nearSup',type:'bin'}, {key:'squeeze',type:'bin'}], src:{n:55,late:-0.0027,n10:0.455,surv:0.498,lens:0.418,retLens:-0.0051,h1:0.47,h2:0.39}},
+  // ── pullback · real — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 26개 ──
+  {id:'pb_r_L01', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + MFI(자금흐름)>59.89 + BB 스퀴즈',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'mfi',type:'num',dir:'gt',th:59.89}, {key:'squeeze',type:'bin'}], src:{n:50,late:0.1154,n10:0.72,surv:0.718,lens:0.76,retLens:0.0794,h1:0.8,h2:0.7}},
+  {id:'pb_r_L02', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + 골든크로스 5×9 + MACD 골든크로스',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_9',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:65,late:0.0987,n10:0.738,surv:0.742,lens:0.831,retLens:0.0658,h1:0.85,h2:0.82}},
+  {id:'pb_r_L03', pool:'pullback', kind:'real', mode:'and', label:'CCI>44.78 + MA120 이격도%>14.78 + BB 스퀴즈',
+   conds:[{key:'cci',type:'num',dir:'gt',th:44.78}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'squeeze',type:'bin'}], src:{n:77,late:0.0833,n10:0.688,surv:0.686,lens:0.792,retLens:0.0619,h1:0.79,h2:0.79}},
+  {id:'pb_r_L04', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.48 + MA200 이격도%>23.39 + MFI(자금흐름)>59.89',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.48}, {key:'dev200',type:'num',dir:'gt',th:23.39}, {key:'mfi',type:'num',dir:'gt',th:59.89}], src:{n:57,late:0.0831,n10:0.702,surv:0.718,lens:0.754,retLens:0.0603,h1:0.89,h2:0.69}},
+  {id:'pb_r_L05', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.48 + MA120 이격도%>14.78 + OBV 상승추세',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.48}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'obvUp',type:'bin'}], src:{n:63,late:0.075,n10:0.683,surv:0.683,lens:0.73,retLens:0.0562,h1:0.81,h2:0.7}},
+  {id:'pb_r_L06', pool:'pullback', kind:'real', mode:'and', label:'BB %B>0.65 + MA120 이격도%>14.78 + BB 스퀴즈',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.65}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'squeeze',type:'bin'}], src:{n:80,late:0.0722,n10:0.675,surv:0.656,lens:0.763,retLens:0.0548,h1:0.75,h2:0.77}},
+  {id:'pb_r_L07', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.48 + MA120 이격도%>14.78 + MA200 이격도%>23.39',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.48}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'dev200',type:'num',dir:'gt',th:23.39}], src:{n:84,late:0.0855,n10:0.738,surv:0.696,lens:0.738,retLens:0.054,h1:0.91,h2:0.67}},
+  {id:'pb_r_L08', pool:'pullback', kind:'real', mode:'and', label:'CCI>44.78 + MA120 이격도%>14.78 + 골든크로스 5×9',
+   conds:[{key:'cci',type:'num',dir:'gt',th:44.78}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_9',type:'bin'}], src:{n:78,late:0.0787,n10:0.705,surv:0.713,lens:0.833,retLens:0.0539,h1:0.86,h2:0.82}},
+  {id:'pb_r_L09', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + BB 스퀴즈 + MA20 돌파안착(상승)',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'squeeze',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:83,late:0.0828,n10:0.759,surv:0.696,lens:0.783,retLens:0.0536,h1:0.78,h2:0.79}},
+  {id:'pb_r_L10', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + 골든크로스 5×9 + MA20 돌파안착(상승)',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_9',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:92,late:0.0838,n10:0.75,surv:0.725,lens:0.826,retLens:0.0528,h1:0.77,h2:0.86}},
+  {id:'pb_r_L11', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.48 + MA120 이격도%>14.78',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.48}, {key:'dev120',type:'num',dir:'gt',th:14.78}], src:{n:90,late:0.083,n10:0.744,surv:0.701,lens:0.744,retLens:0.0525,h1:0.9,h2:0.67}},
+  {id:'pb_r_L12', pool:'pullback', kind:'real', mode:'and', label:'CCI>44.78 + ADX<14.48 + MA200 이격도%>23.39',
+   conds:[{key:'cci',type:'num',dir:'gt',th:44.78}, {key:'adx',type:'num',dir:'lt',th:14.48}, {key:'dev200',type:'num',dir:'gt',th:23.39}], src:{n:72,late:0.0722,n10:0.681,surv:0.663,lens:0.694,retLens:0.052,h1:0.89,h2:0.63}},
+  {id:'pb_r_L13', pool:'pullback', kind:'real', mode:'and', label:'BB %B>0.65 + MA120 이격도%>14.78 + 골든크로스 5×9',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.65}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_9',type:'bin'}], src:{n:85,late:0.0726,n10:0.682,surv:0.689,lens:0.8,retLens:0.0495,h1:0.81,h2:0.79}},
+  {id:'pb_r_L14', pool:'pullback', kind:'real', mode:'and', label:'RSI>54.29 + ADX<14.48 + MA200 이격도%>23.39',
+   conds:[{key:'rsi',type:'num',dir:'gt',th:54.29}, {key:'adx',type:'num',dir:'lt',th:14.48}, {key:'dev200',type:'num',dir:'gt',th:23.39}], src:{n:70,late:0.0634,n10:0.686,surv:0.663,lens:0.729,retLens:0.0468,h1:0.86,h2:0.7}},
+  {id:'pb_r_L15', pool:'pullback', kind:'real', mode:'and', label:'MA60 이격도%>4.96 + OBV 상승다이버전스',
+   conds:[{key:'dev60',type:'num',dir:'gt',th:4.96}, {key:'obvDiv',type:'bin'}], src:{n:54,late:0.0556,n10:0.63,surv:0.669,lens:0.741,retLens:0.0436,h1:0.79,h2:0.73}},
+  {id:'pb_r_L16', pool:'pullback', kind:'real', mode:'and', label:'BB %B>0.65 + MA120 이격도%>14.78 + MA20 돌파안착(상승)',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.65}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'settle20',type:'bin'}], src:{n:193,late:0.0659,n10:0.684,surv:0.653,lens:0.689,retLens:0.0415,h1:0.72,h2:0.67}},
+  {id:'pb_r_L17', pool:'pullback', kind:'real', mode:'and', label:'CCI>44.78 + MA120 이격도%>14.78 + MA20 돌파안착(상승)',
+   conds:[{key:'cci',type:'num',dir:'gt',th:44.78}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'settle20',type:'bin'}], src:{n:195,late:0.0651,n10:0.672,surv:0.648,lens:0.687,retLens:0.0409,h1:0.72,h2:0.67}},
+  {id:'pb_r_L18', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + 골든크로스 5×20',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_20',type:'bin'}], src:{n:75,late:0.0696,n10:0.64,surv:0.656,lens:0.72,retLens:0.0399,h1:0.67,h2:0.76}},
+  {id:'pb_r_L19', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + 골든크로스 5×60 + MA20 돌파안착(상승)',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_60',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:70,late:0.0628,n10:0.643,surv:0.633,lens:0.686,retLens:0.0394,h1:0.7,h2:0.67}},
+  {id:'pb_r_L20', pool:'pullback', kind:'real', mode:'and', label:'CCI>44.78 + MA120 이격도%>14.78 + 골든크로스 5×20',
+   conds:[{key:'cci',type:'num',dir:'gt',th:44.78}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_20',type:'bin'}], src:{n:56,late:0.0678,n10:0.643,surv:0.655,lens:0.732,retLens:0.0393,h1:0.62,h2:0.8}},
+  {id:'pb_r_L21', pool:'pullback', kind:'real', mode:'and', label:'BB %B>0.65 + MA120 이격도%>14.78 + 골든크로스 5×20',
+   conds:[{key:'bbPctB',type:'num',dir:'gt',th:0.65}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_20',type:'bin'}], src:{n:56,late:0.0678,n10:0.643,surv:0.655,lens:0.732,retLens:0.0393,h1:0.62,h2:0.8}},
+  {id:'pb_r_L22', pool:'pullback', kind:'real', mode:'and', label:'Stoch %K<8.94 + MA20 이격도%<-7.08 + MA200 이격도%>23.39',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:8.94}, {key:'dev20',type:'num',dir:'lt',th:-7.08}, {key:'dev200',type:'num',dir:'gt',th:23.39}], src:{n:75,late:0.0678,n10:0.693,surv:0.677,lens:0.693,retLens:0.0384,h1:0.55,h2:0.78}},
+  {id:'pb_r_L23', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + MA200 이격도%>23.39 + 골든크로스 5×20',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'dev200',type:'num',dir:'gt',th:23.39}, {key:'gx5_20',type:'bin'}], src:{n:70,late:0.0647,n10:0.629,surv:0.647,lens:0.7,retLens:0.0376,h1:0.61,h2:0.76}},
+  {id:'pb_r_L24', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.48 + OBV 상승다이버전스 + OBV 상승추세',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.48}, {key:'obvDiv',type:'bin'}, {key:'obvUp',type:'bin'}], src:{n:52,late:0.0742,n10:0.846,surv:0.767,lens:0.769,retLens:0.0358,h1:0.68,h2:0.9}},
+  {id:'pb_r_L25', pool:'pullback', kind:'real', mode:'and', label:'RSI>54.29 + MA120 이격도%>14.78 + 골든크로스 5×20',
+   conds:[{key:'rsi',type:'num',dir:'gt',th:54.29}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_20',type:'bin'}], src:{n:55,late:0.0596,n10:0.636,surv:0.645,lens:0.727,retLens:0.0346,h1:0.59,h2:0.79}},
+  {id:'pb_r_L26', pool:'pullback', kind:'real', mode:'and', label:'MA200 이격도%>23.39 + OBV 상승다이버전스 + MACD 영선아래',
+   conds:[{key:'dev200',type:'num',dir:'gt',th:23.39}, {key:'obvDiv',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:72,late:0.0619,n10:0.653,surv:0.671,lens:0.708,retLens:0.0346,h1:0.67,h2:0.72}},
+  // ── pullback · real 추가 [S1094] — 발굴(스냅 20260701)·기존26 중복26 제거 순수신규 감사통과 9개. median 유효(기존19/26·발굴9/24 통과=KR눌림과 달리 꼬리 아닌 진짜 엣지). tradable(매매 사용). ──
+  {id:'pb_r_L27', pool:'pullback', kind:'real', mode:'and', label:'CCI>44.78 + MA120 이격도%>14.78 + MACD 골든크로스',
+   conds:[{key:'cci',type:'num',dir:'gt',th:44.78}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'macdGc',type:'bin'}], src:{n:169,late:0.07,n10:0.6923,surv:0.6568,lens:0.6923,retLens:0.0453,h1:0.72,h2:0.67}},
+  {id:'pb_r_L28', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + MA20 돌파안착(상승) + MACD 골든크로스',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'settle20',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:156,late:0.0743,n10:0.7179,surv:0.6699,lens:0.6923,retLens:0.0464,h1:0.74,h2:0.65}},
+  {id:'pb_r_L29', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + 골든크로스 5×20 + MACD 골든크로스',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_20',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:62,late:0.0672,n10:0.629,surv:0.65,lens:0.7258,retLens:0.0369,h1:0.62,h2:0.81}},
+  {id:'pb_r_L30', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + OBV 상승추세 + 골든크로스 5×9',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'obvUp',type:'bin'}, {key:'gx5_9',type:'bin'}], src:{n:156,late:0.0511,n10:0.641,surv:0.6654,lens:0.7821,retLens:0.0396,h1:0.78,h2:0.78}},
+  {id:'pb_r_L31', pool:'pullback', kind:'real', mode:'and', label:'Stoch %K<8.94 + MA200 이격도%>23.39 + MA5 기울기%<-2.9',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:8.94}, {key:'dev200',type:'num',dir:'gt',th:23.39}, {key:'ma5slope',type:'num',dir:'lt',th:-2.9}], src:{n:74,late:0.0643,n10:0.7162,surv:0.6892,lens:0.6892,retLens:0.037,h1:0.52,h2:0.79}},
+  {id:'pb_r_L32', pool:'pullback', kind:'real', mode:'and', label:'MA120 이격도%>14.78 + 골든크로스 5×20 + MA20 돌파안착(상승)',
+   conds:[{key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'gx5_20',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:58,late:0.0701,n10:0.6552,surv:0.6672,lens:0.7414,retLens:0.039,h1:0.61,h2:0.83}},
+  {id:'pb_r_L33', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.48 + MA200 이격도%>23.39 + 엔벨로프 상단이탈',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.48}, {key:'dev200',type:'num',dir:'gt',th:23.39}, {key:'envUp',type:'bin'}], src:{n:52,late:0.0524,n10:0.6538,surv:0.6538,lens:0.6923,retLens:0.0419,h1:0.8,h2:0.67}},
+  {id:'pb_r_L34', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.48 + MA120 이격도%>14.78 + BB 스퀴즈',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.48}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'squeeze',type:'bin'}], src:{n:52,late:0.0914,n10:0.7692,surv:0.6635,lens:0.7115,retLens:0.0462,h1:0.94,h2:0.59}},
+  {id:'pb_r_L35', pool:'pullback', kind:'real', mode:'and', label:'ADX<14.48 + MA120 이격도%>14.78 + 일목 구름위',
+   conds:[{key:'adx',type:'num',dir:'lt',th:14.48}, {key:'dev120',type:'num',dir:'gt',th:14.78}, {key:'ichiCloudUp',type:'bin'}], src:{n:55,late:0.0755,n10:0.7273,surv:0.7473,lens:0.8364,retLens:0.0559,h1:0.9,h2:0.82}},
+
+  // ── pullback · fake — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 4개 ──
+  {id:'pb_f_L01', pool:'pullback', kind:'fake', mode:'and', label:'RSI>54.29 + BB %B>0.65 + MACD 영선아래 + DI 하락우위',
+   conds:[{key:'rsi',type:'num',dir:'gt',th:54.29}, {key:'bbPctB',type:'num',dir:'gt',th:0.65}, {key:'macdBelow0',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:33,late:0.0014,n10:0.606,surv:0.482,lens:0.455,retLens:-0.0071,h1:0.44,h2:0.47}},
+  {id:'pb_f_L02', pool:'pullback', kind:'fake', mode:'and', label:'RSI>54.29 + MACD 골든크로스 + MACD 영선아래 + DI 하락우위',
+   conds:[{key:'rsi',type:'num',dir:'gt',th:54.29}, {key:'macdGc',type:'bin'}, {key:'macdBelow0',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:32,late:0.0027,n10:0.625,surv:0.478,lens:0.469,retLens:-0.0062,h1:0.44,h2:0.5}},
+  {id:'pb_f_L03', pool:'pullback', kind:'fake', mode:'and', label:'OBV 상승추세 + 골든크로스 5×20 + MA20 돌파안착(상승) + DI 하락우위',
+   conds:[{key:'obvUp',type:'bin'}, {key:'gx5_20',type:'bin'}, {key:'settle20',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:92,late:-0.0141,n10:0.446,surv:0.451,lens:0.446,retLens:-0.0055,h1:0.36,h2:0.53}},
+  {id:'pb_f_L04', pool:'pullback', kind:'fake', mode:'and', label:'RSI>54.29 + MACD 영선아래 + DI 하락우위',
+   conds:[{key:'rsi',type:'num',dir:'gt',th:54.29}, {key:'macdBelow0',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:38,late:0.0027,n10:0.605,surv:0.482,lens:0.447,retLens:-0.0054,h1:0.38,h2:0.53}},
+  ],
+  coin: [
+  // ── deadcat · real — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 41개 ──
+  {id:'dc_r_L01', pool:'deadcat', kind:'real', mode:'and', label:'MA200 이격도%<-47.2 + VR(거래량비율)<70.47 + BB 스퀴즈',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'squeeze',type:'bin'}], src:{n:120,late:0.1112,n10:0.783,surv:0.737,lens:0.767,retLens:0.0623,h1:0.8,h2:0.73}},
+  {id:'dc_r_L02', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + MA200 이격도%<-47.2 + VR(거래량비율)<70.47',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'vr',type:'num',dir:'lt',th:70.47}], src:{n:77,late:0.0951,n10:0.727,surv:0.63,lens:0.61,retLens:0.0577,h1:0.63,h2:0.59}},
+  {id:'dc_r_L03', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.12 + MA200 이격도%<-47.2 + MACD 골든크로스',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'macdGc',type:'bin'}], src:{n:66,late:0.0688,n10:0.606,surv:0.668,lens:0.697,retLens:0.0496,h1:0.61,h2:0.76}},
+  {id:'dc_r_L04', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + MA20 이격도%<-11.66 + MA120 이격도%<-33.4',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev20',type:'num',dir:'lt',th:-11.66}, {key:'dev120',type:'num',dir:'lt',th:-33.4}], src:{n:64,late:0.0511,n10:0.719,surv:0.692,lens:0.766,retLens:0.0459,h1:0.67,h2:0.85}},
+  {id:'dc_r_L05', pool:'deadcat', kind:'real', mode:'and', label:'MA60 이격도%<-23.29 + MA200 이격도%<-47.2 + BB 스퀴즈',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'squeeze',type:'bin'}], src:{n:80,late:0.0706,n10:0.75,surv:0.678,lens:0.7,retLens:0.0422,h1:0.81,h2:0.61}},
+  {id:'dc_r_L06', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + MA200 이격도%<-47.2 + BB 스퀴즈',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'squeeze',type:'bin'}], src:{n:105,late:0.0779,n10:0.657,surv:0.624,lens:0.676,retLens:0.0413,h1:0.71,h2:0.66}},
+  {id:'dc_r_L07', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + MA20 이격도%<-11.66 + MA60 이격도%<-23.29',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev20',type:'num',dir:'lt',th:-11.66}, {key:'dev60',type:'num',dir:'lt',th:-23.29}], src:{n:80,late:0.0386,n10:0.613,surv:0.621,lens:0.688,retLens:0.0402,h1:0.63,h2:0.73}},
+  {id:'dc_r_L08', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + RSI<32.65 + MA120 이격도%<-33.4',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'dev120',type:'num',dir:'lt',th:-33.4}], src:{n:75,late:0.0452,n10:0.72,surv:0.656,lens:0.653,retLens:0.0387,h1:0.59,h2:0.71}},
+  {id:'dc_r_L09', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + MA20 이격도%<-11.66 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev20',type:'num',dir:'lt',th:-11.66}, {key:'nearSup',type:'bin'}], src:{n:139,late:0.0434,n10:0.647,surv:0.645,lens:0.712,retLens:0.0385,h1:0.69,h2:0.74}},
+  {id:'dc_r_L10', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + Stoch %K<9.23 + MA5 기울기%<-5.14',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'stochK',type:'num',dir:'lt',th:9.23}, {key:'ma5slope',type:'num',dir:'lt',th:-5.14}], src:{n:112,late:0.0439,n10:0.661,surv:0.664,lens:0.705,retLens:0.0372,h1:0.75,h2:0.64}},
+  {id:'dc_r_L11', pool:'deadcat', kind:'real', mode:'and', label:'RSI<32.65 + MA200 이격도%<-47.2 + MACD 골든크로스',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'macdGc',type:'bin'}], src:{n:57,late:0.0472,n10:0.684,surv:0.621,lens:0.596,retLens:0.0369,h1:0.73,h2:0.44}},
+  {id:'dc_r_L12', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.12 + MA60 이격도%<-23.29 + MA200 이격도%<-47.2',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'dev200',type:'num',dir:'lt',th:-47.2}], src:{n:115,late:0.0445,n10:0.626,surv:0.672,lens:0.713,retLens:0.0365,h1:0.63,h2:0.81}},
+  {id:'dc_r_L13', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + MA60 이격도%<-23.29 + OBV 상승다이버전스',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'obvDiv',type:'bin'}], src:{n:53,late:0.0312,n10:0.566,surv:0.57,lens:0.642,retLens:0.036,h1:0.64,h2:0.64}},
+  {id:'dc_r_L14', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-11.66 + MA60 이격도%<-23.29 + MFI(자금흐름)>51.87',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-11.66}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'mfi',type:'num',dir:'gt',th:51.87}], src:{n:63,late:0.037,n10:0.556,surv:0.606,lens:0.667,retLens:0.0359,h1:0.69,h2:0.65}},
+  {id:'dc_r_L15', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + MA200 이격도%<-47.2 + DI 하락우위',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'diBear',type:'bin'}], src:{n:182,late:0.0507,n10:0.599,surv:0.568,lens:0.588,retLens:0.0354,h1:0.56,h2:0.6}},
+  {id:'dc_r_L16', pool:'deadcat', kind:'real', mode:'and', label:'RSI<32.65 + MA20 이격도%<-11.66 + MFI(자금흐름)>51.87',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'dev20',type:'num',dir:'lt',th:-11.66}, {key:'mfi',type:'num',dir:'gt',th:51.87}], src:{n:66,late:0.0359,n10:0.576,surv:0.608,lens:0.667,retLens:0.0338,h1:0.81,h2:0.6}},
+  {id:'dc_r_L17', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + MA5 기울기%<-5.14 + 지지선 근접',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'ma5slope',type:'num',dir:'lt',th:-5.14}, {key:'nearSup',type:'bin'}], src:{n:159,late:0.0365,n10:0.597,surv:0.62,lens:0.667,retLens:0.0335,h1:0.64,h2:0.69}},
+  {id:'dc_r_L18', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + BB %B<0.12 + MA5 기울기%<-5.14',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'ma5slope',type:'num',dir:'lt',th:-5.14}], src:{n:59,late:0.0495,n10:0.695,surv:0.681,lens:0.712,retLens:0.0324,h1:0.75,h2:0.6}},
+  {id:'dc_r_L19', pool:'deadcat', kind:'real', mode:'and', label:'RSI<32.65 + BB %B<0.12 + MA200 이격도%<-47.2',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'dev200',type:'num',dir:'lt',th:-47.2}], src:{n:114,late:0.0316,n10:0.579,surv:0.636,lens:0.667,retLens:0.0323,h1:0.63,h2:0.71}},
+  {id:'dc_r_L20', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + MA60 이격도%<-23.29 + MA200 이격도%<-47.2',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'dev200',type:'num',dir:'lt',th:-47.2}], src:{n:100,late:0.0385,n10:0.68,surv:0.635,lens:0.66,retLens:0.0323,h1:0.51,h2:0.76}},
+  {id:'dc_r_L21', pool:'deadcat', kind:'real', mode:'and', label:'RSI<32.65 + MA120 이격도%<-33.4 + BB 스퀴즈',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'dev120',type:'num',dir:'lt',th:-33.4}, {key:'squeeze',type:'bin'}], src:{n:61,late:0.0479,n10:0.557,surv:0.58,lens:0.59,retLens:0.0318,h1:0.59,h2:0.59}},
+  {id:'dc_r_L22', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + RSI<32.65 + MA5 기울기%<-5.14',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'ma5slope',type:'num',dir:'lt',th:-5.14}], src:{n:53,late:0.0373,n10:0.604,surv:0.581,lens:0.623,retLens:0.0296,h1:0.59,h2:0.65}},
+  {id:'dc_r_L23', pool:'deadcat', kind:'real', mode:'and', label:'MA60 이격도%<-23.29 + MA200 이격도%<-47.2 + OBV 상승추세',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'obvUp',type:'bin'}], src:{n:70,late:0.0351,n10:0.586,surv:0.604,lens:0.671,retLens:0.029,h1:0.71,h2:0.64}},
+  {id:'dc_r_L24', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-11.66 + MA60 이격도%<-23.29 + OBV 상승다이버전스',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-11.66}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'obvDiv',type:'bin'}], src:{n:72,late:0.0347,n10:0.556,surv:0.596,lens:0.681,retLens:0.0287,h1:0.61,h2:0.81}},
+  {id:'dc_r_L25', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<9.23 + MA60 이격도%<-23.29 + MA200 이격도%<-47.2',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:9.23}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'dev200',type:'num',dir:'lt',th:-47.2}], src:{n:126,late:0.0328,n10:0.651,surv:0.629,lens:0.667,retLens:0.0282,h1:0.62,h2:0.72}},
+  {id:'dc_r_L26', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.12 + MA120 이격도%<-33.4 + MFI(자금흐름)>51.87',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'dev120',type:'num',dir:'lt',th:-33.4}, {key:'mfi',type:'num',dir:'gt',th:51.87}], src:{n:50,late:0.0474,n10:0.58,surv:0.586,lens:0.62,retLens:0.0279,h1:0.45,h2:0.94}},
+  {id:'dc_r_L27', pool:'deadcat', kind:'real', mode:'and', label:'MA20 이격도%<-11.66 + MA60 이격도%<-23.29 + OBV 상승추세',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-11.66}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'obvUp',type:'bin'}], src:{n:62,late:0.0258,n10:0.548,surv:0.605,lens:0.661,retLens:0.0238,h1:0.72,h2:0.62}},
+  {id:'dc_r_L28', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-80.77 + MA60 이격도%<-23.29 + BB 스퀴즈',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-80.77}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'squeeze',type:'bin'}], src:{n:82,late:0.04,n10:0.585,surv:0.606,lens:0.61,retLens:0.0236,h1:0.54,h2:0.76}},
+  {id:'dc_r_L29', pool:'deadcat', kind:'real', mode:'and', label:'RSI<32.65 + Stoch %K<9.23 + MFI(자금흐름)>51.87',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'stochK',type:'num',dir:'lt',th:9.23}, {key:'mfi',type:'num',dir:'gt',th:51.87}], src:{n:64,late:0.0297,n10:0.641,surv:0.608,lens:0.625,retLens:0.0233,h1:0.63,h2:0.62}},
+  {id:'dc_r_L30', pool:'deadcat', kind:'real', mode:'and', label:'RSI<32.65 + MA120 이격도%<-33.4 + MFI(자금흐름)>51.87',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'dev120',type:'num',dir:'lt',th:-33.4}, {key:'mfi',type:'num',dir:'gt',th:51.87}], src:{n:56,late:0.0339,n10:0.607,surv:0.573,lens:0.625,retLens:0.0232,h1:0.66,h2:0.56}},
+  {id:'dc_r_L31', pool:'deadcat', kind:'real', mode:'and', label:'Stoch %K<9.23 + MA120 이격도%<-33.4 + MFI(자금흐름)>51.87',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:9.23}, {key:'dev120',type:'num',dir:'lt',th:-33.4}, {key:'mfi',type:'num',dir:'gt',th:51.87}], src:{n:59,late:0.0227,n10:0.576,surv:0.556,lens:0.61,retLens:0.0231,h1:0.56,h2:0.68}},
+  {id:'dc_r_L32', pool:'deadcat', kind:'real', mode:'and', label:'거래량 OSC<-35.25 + CCI<-80.77 + MA60 이격도%<-23.29',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'cci',type:'num',dir:'lt',th:-80.77}, {key:'dev60',type:'num',dir:'lt',th:-23.29}], src:{n:131,late:0.0222,n10:0.58,surv:0.565,lens:0.588,retLens:0.0228,h1:0.5,h2:0.66}},
+  {id:'dc_r_L33', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.12 + MA20 이격도%<-11.66 + MA60 이격도%<-23.29',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'dev20',type:'num',dir:'lt',th:-11.66}, {key:'dev60',type:'num',dir:'lt',th:-23.29}], src:{n:180,late:0.0172,n10:0.55,surv:0.609,lens:0.656,retLens:0.0221,h1:0.69,h2:0.6}},
+  {id:'dc_r_L34', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.12 + MA120 이격도%<-33.4 + BB 스퀴즈',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'dev120',type:'num',dir:'lt',th:-33.4}, {key:'squeeze',type:'bin'}], src:{n:67,late:0.0388,n10:0.478,surv:0.572,lens:0.597,retLens:0.0221,h1:0.45,h2:0.87}},
+  {id:'dc_r_L35', pool:'deadcat', kind:'real', mode:'and', label:'RSI<32.65 + MA60 이격도%<-23.29 + MA200 이격도%<-47.2',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'dev200',type:'num',dir:'lt',th:-47.2}], src:{n:260,late:0.0272,n10:0.612,surv:0.582,lens:0.608,retLens:0.0217,h1:0.56,h2:0.65}},
+  {id:'dc_r_L36', pool:'deadcat', kind:'real', mode:'and', label:'ADX<17.61 + OBV 상승다이버전스 + VR(거래량비율)<70.47',
+   conds:[{key:'adx',type:'num',dir:'lt',th:17.61}, {key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}], src:{n:55,late:0.0424,n10:0.582,surv:0.604,lens:0.636,retLens:0.0214,h1:0.52,h2:0.72}},
+  {id:'dc_r_L37', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.12 + MA60 이격도%<-23.29 + VR(거래량비율)<70.47',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'vr',type:'num',dir:'lt',th:70.47}], src:{n:194,late:0.0171,n10:0.546,surv:0.601,lens:0.629,retLens:0.0214,h1:0.63,h2:0.63}},
+  {id:'dc_r_L38', pool:'deadcat', kind:'real', mode:'and', label:'RSI<32.65 + BB %B<0.12 + MA60 이격도%<-23.29',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'dev60',type:'num',dir:'lt',th:-23.29}], src:{n:218,late:0.0185,n10:0.555,surv:0.6,lens:0.619,retLens:0.0212,h1:0.63,h2:0.6}},
+  {id:'dc_r_L39', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.12 + ADX<17.61 + MFI(자금흐름)>51.87',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'adx',type:'num',dir:'lt',th:17.61}, {key:'mfi',type:'num',dir:'gt',th:51.87}], src:{n:77,late:0.0271,n10:0.636,surv:0.564,lens:0.571,retLens:0.0205,h1:0.46,h2:0.67}},
+  {id:'dc_r_L40', pool:'deadcat', kind:'real', mode:'and', label:'CCI<-80.77 + MA60 이격도%<-23.29 + OBV 상승추세',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-80.77}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'obvUp',type:'bin'}], src:{n:94,late:0.021,n10:0.521,surv:0.573,lens:0.628,retLens:0.0203,h1:0.7,h2:0.57}},
+  {id:'dc_r_L41', pool:'deadcat', kind:'real', mode:'and', label:'BB %B<0.12 + Stoch %K<9.23 + MA60 이격도%<-23.29',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'stochK',type:'num',dir:'lt',th:9.23}, {key:'dev60',type:'num',dir:'lt',th:-23.29}], src:{n:144,late:0.0208,n10:0.611,surv:0.615,lens:0.653,retLens:0.0202,h1:0.61,h2:0.7}},
+  // ── deadcat · fake — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 42개 ──
+  {id:'dc_f_L01', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + VR(거래량비율)<70.47 + BB 스퀴즈 + DI 하락우위',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'squeeze',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:53,late:-0.0456,n10:0.264,surv:0.342,lens:0.321,retLens:-0.0309,h1:0.25,h2:0.38}},
+  {id:'dc_f_L02', pool:'deadcat', kind:'fake', mode:'and', label:'CCI<-80.77 + OBV 상승다이버전스 + VR(거래량비율)<70.47 + BB 스퀴즈',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-80.77}, {key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'squeeze',type:'bin'}], src:{n:44,late:-0.0369,n10:0.341,surv:0.38,lens:0.318,retLens:-0.0304,h1:0.18,h2:0.41}},
+  {id:'dc_f_L03', pool:'deadcat', kind:'fake', mode:'and', label:'MA120 이격도%<-33.4 + RSI 상승다이버전스 + 골든크로스 5×9 + DI 하락우위',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-33.4}, {key:'rsiDiv',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:50,late:-0.0101,n10:0.46,surv:0.404,lens:0.34,retLens:-0.0272,h1:0.33,h2:0.4}},
+  {id:'dc_f_L04', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + VR(거래량비율)<70.47 + 지지선 근접 + DI 하락우위',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'nearSup',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:69,late:-0.0418,n10:0.261,surv:0.377,lens:0.319,retLens:-0.0259,h1:0.39,h2:0.25}},
+  {id:'dc_f_L05', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B<0.12 + OBV 상승다이버전스 + VR(거래량비율)<70.47 + MACD 영선아래',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'macdBelow0',type:'bin'}], src:{n:58,late:-0.041,n10:0.31,surv:0.386,lens:0.345,retLens:-0.0254,h1:0.38,h2:0.31}},
+  {id:'dc_f_L06', pool:'deadcat', kind:'fake', mode:'and', label:'CCI<-80.77 + BB %B<0.12 + OBV 상승다이버전스 + VR(거래량비율)<70.47',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-80.77}, {key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}], src:{n:56,late:-0.0447,n10:0.304,surv:0.384,lens:0.339,retLens:-0.0253,h1:0.39,h2:0.28}},
+  {id:'dc_f_L07', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B<0.12 + OBV 상승다이버전스 + VR(거래량비율)<70.47 + 지지선 근접',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'nearSup',type:'bin'}], src:{n:51,late:-0.0388,n10:0.314,surv:0.382,lens:0.353,retLens:-0.0249,h1:0.4,h2:0.31}},
+  {id:'dc_f_L08', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B<0.12 + OBV 상승다이버전스 + VR(거래량비율)<70.47',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}], src:{n:59,late:-0.0403,n10:0.305,surv:0.386,lens:0.356,retLens:-0.0248,h1:0.38,h2:0.33}},
+  {id:'dc_f_L09', pool:'deadcat', kind:'fake', mode:'and', label:'MA60 이격도%<-23.29 + MA120 이격도%<-33.4 + 골든크로스 5×9 + MACD 골든크로스',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'dev120',type:'num',dir:'lt',th:-33.4}, {key:'gx5_9',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:113,late:-0.0323,n10:0.398,surv:0.347,lens:0.327,retLens:-0.0238,h1:0.36,h2:0.26}},
+  {id:'dc_f_L10', pool:'deadcat', kind:'fake', mode:'and', label:'CCI<-80.77 + Stoch %K<9.23 + ADX<17.61 + MA120 이격도%<-33.4',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-80.77}, {key:'stochK',type:'num',dir:'lt',th:9.23}, {key:'adx',type:'num',dir:'lt',th:17.61}, {key:'dev120',type:'num',dir:'lt',th:-33.4}], src:{n:48,late:-0.0389,n10:0.375,surv:0.387,lens:0.354,retLens:-0.0228,h1:0.4,h2:0.3}},
+  {id:'dc_f_L11', pool:'deadcat', kind:'fake', mode:'and', label:'OBV 상승다이버전스 + 골든크로스 5×9 + 골든크로스 5×20 + MACD 영선아래',
+   conds:[{key:'obvDiv',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'gx5_20',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:42,late:-0.0223,n10:0.333,surv:0.348,lens:0.357,retLens:-0.0225,h1:0.29,h2:0.4}},
+  {id:'dc_f_L12', pool:'deadcat', kind:'fake', mode:'and', label:'CCI<-80.77 + OBV 상승다이버전스 + VR(거래량비율)<70.47 + 지지선 근접',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-80.77}, {key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'nearSup',type:'bin'}], src:{n:78,late:-0.0369,n10:0.269,surv:0.385,lens:0.346,retLens:-0.0225,h1:0.4,h2:0.3}},
+  {id:'dc_f_L13', pool:'deadcat', kind:'fake', mode:'and', label:'MA5 기울기%<-5.14 + RSI 상승다이버전스 + VR(거래량비율)<70.47 + DI 하락우위',
+   conds:[{key:'ma5slope',type:'num',dir:'lt',th:-5.14}, {key:'rsiDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'diBear',type:'bin'}], src:{n:74,late:-0.0407,n10:0.284,surv:0.33,lens:0.297,retLens:-0.0224,h1:0.33,h2:0.1}},
+  {id:'dc_f_L14', pool:'deadcat', kind:'fake', mode:'and', label:'MA5 기울기%<-5.14 + RSI 상승다이버전스 + VR(거래량비율)<70.47',
+   conds:[{key:'ma5slope',type:'num',dir:'lt',th:-5.14}, {key:'rsiDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}], src:{n:75,late:-0.0405,n10:0.28,surv:0.328,lens:0.293,retLens:-0.0223,h1:0.33,h2:0.09}},
+  {id:'dc_f_L15', pool:'deadcat', kind:'fake', mode:'and', label:'MA5 기울기%<-5.14 + RSI 상승다이버전스 + VR(거래량비율)<70.47 + MACD 영선아래',
+   conds:[{key:'ma5slope',type:'num',dir:'lt',th:-5.14}, {key:'rsiDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'macdBelow0',type:'bin'}], src:{n:75,late:-0.0405,n10:0.28,surv:0.328,lens:0.293,retLens:-0.0223,h1:0.33,h2:0.09}},
+  {id:'dc_f_L16', pool:'deadcat', kind:'fake', mode:'and', label:'MA5 기울기%<-5.14 + RSI 상승다이버전스 + VR(거래량비율)<70.47 + PSAR 하락',
+   conds:[{key:'ma5slope',type:'num',dir:'lt',th:-5.14}, {key:'rsiDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'sarBear',type:'bin'}], src:{n:75,late:-0.0405,n10:0.28,surv:0.328,lens:0.293,retLens:-0.0223,h1:0.33,h2:0.09}},
+  {id:'dc_f_L17', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B<0.12 + OBV 상승다이버전스 + VR(거래량비율)<70.47 + DI 하락우위',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'obvDiv',type:'bin'}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'diBear',type:'bin'}], src:{n:48,late:-0.0401,n10:0.313,surv:0.398,lens:0.354,retLens:-0.0218,h1:0.41,h2:0.29}},
+  {id:'dc_f_L18', pool:'deadcat', kind:'fake', mode:'and', label:'ADX<17.61 + VR(거래량비율)<70.47 + MACD 골든크로스 + DI 하락우위',
+   conds:[{key:'adx',type:'num',dir:'lt',th:17.61}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'macdGc',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:56,late:-0.0305,n10:0.339,surv:0.366,lens:0.339,retLens:-0.0211,h1:0.3,h2:0.36}},
+  {id:'dc_f_L19', pool:'deadcat', kind:'fake', mode:'and', label:'RSI 상승다이버전스 + OBV 상승다이버전스 + OBV 상승추세 + DI 하락우위',
+   conds:[{key:'rsiDiv',type:'bin'}, {key:'obvDiv',type:'bin'}, {key:'obvUp',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:104,late:-0.0382,n10:0.24,surv:0.311,lens:0.337,retLens:-0.0199,h1:0.33,h2:0.38}},
+  {id:'dc_f_L20', pool:'deadcat', kind:'fake', mode:'and', label:'MA60 이격도%<-23.29 + RSI 상승다이버전스 + BB 스퀴즈 + MACD 골든크로스',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'rsiDiv',type:'bin'}, {key:'squeeze',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:34,late:-0.011,n10:0.412,surv:0.397,lens:0.265,retLens:-0.0193,h1:0.25,h2:0.3}},
+  {id:'dc_f_L21', pool:'deadcat', kind:'fake', mode:'and', label:'BB %B<0.12 + Stoch %K<9.23 + OBV 상승다이버전스 + BB 스퀴즈',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.12}, {key:'stochK',type:'num',dir:'lt',th:9.23}, {key:'obvDiv',type:'bin'}, {key:'squeeze',type:'bin'}], src:{n:71,late:-0.026,n10:0.338,surv:0.38,lens:0.352,retLens:-0.0174,h1:0.32,h2:0.38}},
+  {id:'dc_f_L22', pool:'deadcat', kind:'fake', mode:'and', label:'MA200 이격도%<-47.2 + RSI 상승다이버전스 + OBV 상승다이버전스',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'rsiDiv',type:'bin'}, {key:'obvDiv',type:'bin'}], src:{n:93,late:-0.0219,n10:0.376,surv:0.365,lens:0.355,retLens:-0.0167,h1:0.35,h2:0.36}},
+  {id:'dc_f_L23', pool:'deadcat', kind:'fake', mode:'and', label:'MA200 이격도%<-47.2 + RSI 상승다이버전스 + OBV 상승다이버전스 + MACD 영선아래',
+   conds:[{key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'rsiDiv',type:'bin'}, {key:'obvDiv',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:93,late:-0.0219,n10:0.376,surv:0.365,lens:0.355,retLens:-0.0167,h1:0.35,h2:0.36}},
+  {id:'dc_f_L24', pool:'deadcat', kind:'fake', mode:'and', label:'거래량 OSC<-35.25 + MA60 이격도%<-23.29 + VR(거래량비율)<70.47 + 골든크로스 5×9',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'gx5_9',type:'bin'}], src:{n:30,late:0.0051,n10:0.5,surv:0.383,lens:0.333,retLens:-0.0162,h1:0.27,h2:0.4}},
+  {id:'dc_f_L25', pool:'deadcat', kind:'fake', mode:'and', label:'ADX<17.61 + 골든크로스 5×20 + MA20 돌파안착(상승) + MACD 영선아래',
+   conds:[{key:'adx',type:'num',dir:'lt',th:17.61}, {key:'gx5_20',type:'bin'}, {key:'settle20',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:59,late:-0.0243,n10:0.373,surv:0.356,lens:0.356,retLens:-0.0153,h1:0.36,h2:0.35}},
+  {id:'dc_f_L26', pool:'deadcat', kind:'fake', mode:'and', label:'ADX<17.61 + MFI(자금흐름)>51.87 + 골든크로스 5×9 + MA20 돌파안착(상승)',
+   conds:[{key:'adx',type:'num',dir:'lt',th:17.61}, {key:'mfi',type:'num',dir:'gt',th:51.87}, {key:'gx5_9',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:91,late:-0.0307,n10:0.286,surv:0.338,lens:0.33,retLens:-0.0151,h1:0.21,h2:0.38}},
+  {id:'dc_f_L27', pool:'deadcat', kind:'fake', mode:'and', label:'ADX<17.61 + MFI(자금흐름)>51.87 + MA20 돌파안착(상승) + MACD 골든크로스',
+   conds:[{key:'adx',type:'num',dir:'lt',th:17.61}, {key:'mfi',type:'num',dir:'gt',th:51.87}, {key:'settle20',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:140,late:-0.0292,n10:0.293,surv:0.347,lens:0.343,retLens:-0.015,h1:0.34,h2:0.34}},
+  {id:'dc_f_L28', pool:'deadcat', kind:'fake', mode:'and', label:'MA120 이격도%<-33.4 + MA200 이격도%<-47.2 + OBV 상승다이버전스 + DI 하락우위',
+   conds:[{key:'dev120',type:'num',dir:'lt',th:-33.4}, {key:'dev200',type:'num',dir:'lt',th:-47.2}, {key:'obvDiv',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:83,late:-0.0295,n10:0.265,surv:0.335,lens:0.337,retLens:-0.0138,h1:0.29,h2:0.38}},
+  {id:'dc_f_L29', pool:'deadcat', kind:'fake', mode:'and', label:'ADX<17.61 + MA20 돌파안착(상승)',
+   conds:[{key:'adx',type:'num',dir:'lt',th:17.61}, {key:'settle20',type:'bin'}], src:{n:178,late:-0.0286,n10:0.275,surv:0.342,lens:0.348,retLens:-0.0137,h1:0.27,h2:0.4}},
+  {id:'dc_f_L30', pool:'deadcat', kind:'fake', mode:'and', label:'VR(거래량비율)<70.47 + 골든크로스 5×9 + MACD 골든크로스',
+   conds:[{key:'vr',type:'num',dir:'lt',th:70.47}, {key:'gx5_9',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:375,late:-0.0264,n10:0.395,surv:0.371,lens:0.344,retLens:-0.0137,h1:0.34,h2:0.35}},
+  {id:'dc_f_L31', pool:'deadcat', kind:'fake', mode:'and', label:'ADX<17.61 + MA20 돌파안착(상승) + MACD 골든크로스',
+   conds:[{key:'adx',type:'num',dir:'lt',th:17.61}, {key:'settle20',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:172,late:-0.0276,n10:0.279,surv:0.347,lens:0.355,retLens:-0.013,h1:0.29,h2:0.4}},
+  {id:'dc_f_L32', pool:'deadcat', kind:'fake', mode:'and', label:'VR(거래량비율)<70.47 + 골든크로스 5×9 + MACD 골든크로스 + MACD 영선아래',
+   conds:[{key:'vr',type:'num',dir:'lt',th:70.47}, {key:'gx5_9',type:'bin'}, {key:'macdGc',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:366,late:-0.025,n10:0.404,surv:0.377,lens:0.352,retLens:-0.0129,h1:0.35,h2:0.36}},
+  {id:'dc_f_L33', pool:'deadcat', kind:'fake', mode:'and', label:'ADX<17.61 + 골든크로스 5×9 + MA20 돌파안착(상승)',
+   conds:[{key:'adx',type:'num',dir:'lt',th:17.61}, {key:'gx5_9',type:'bin'}, {key:'settle20',type:'bin'}], src:{n:111,late:-0.0304,n10:0.279,surv:0.334,lens:0.333,retLens:-0.0127,h1:0.19,h2:0.41}},
+  {id:'dc_f_L34', pool:'deadcat', kind:'fake', mode:'and', label:'RSI<32.65 + VR(거래량비율)<70.47 + BB 스퀴즈 + PSAR 하락',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'squeeze',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:86,late:-0.0164,n10:0.384,surv:0.422,lens:0.337,retLens:-0.0125,h1:0.4,h2:0.23}},
+  {id:'dc_f_L35', pool:'deadcat', kind:'fake', mode:'and', label:'ADX<17.61 + 골든크로스 5×9 + MA20 돌파안착(상승) + MACD 골든크로스',
+   conds:[{key:'adx',type:'num',dir:'lt',th:17.61}, {key:'gx5_9',type:'bin'}, {key:'settle20',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:110,late:-0.0298,n10:0.282,surv:0.337,lens:0.336,retLens:-0.0123,h1:0.19,h2:0.41}},
+  {id:'dc_f_L36', pool:'deadcat', kind:'fake', mode:'and', label:'BB 스퀴즈 + 골든크로스 5×9 + MACD 골든크로스 + DI 하락우위',
+   conds:[{key:'squeeze',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'macdGc',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:277,late:-0.0174,n10:0.419,surv:0.382,lens:0.354,retLens:-0.0119,h1:0.36,h2:0.35}},
+  {id:'dc_f_L37', pool:'deadcat', kind:'fake', mode:'and', label:'거래량 OSC<-35.25 + VR(거래량비율)<70.47 + MACD 골든크로스',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'macdGc',type:'bin'}], src:{n:264,late:-0.0136,n10:0.394,surv:0.371,lens:0.345,retLens:-0.0112,h1:0.34,h2:0.35}},
+  {id:'dc_f_L38', pool:'deadcat', kind:'fake', mode:'and', label:'거래량 OSC<-35.25 + VR(거래량비율)<70.47 + MACD 골든크로스 + MACD 영선아래',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'macdGc',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:259,late:-0.0134,n10:0.394,surv:0.373,lens:0.347,retLens:-0.0109,h1:0.35,h2:0.35}},
+  {id:'dc_f_L39', pool:'deadcat', kind:'fake', mode:'and', label:'거래량 OSC<-35.25 + MA60 이격도%<-23.29 + VR(거래량비율)<70.47 + MACD 골든크로스',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'dev60',type:'num',dir:'lt',th:-23.29}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'macdGc',type:'bin'}], src:{n:67,late:-0.0038,n10:0.522,surv:0.412,lens:0.328,retLens:-0.0108,h1:0.28,h2:0.39}},
+  {id:'dc_f_L40', pool:'deadcat', kind:'fake', mode:'and', label:'RSI<32.65 + VR(거래량비율)<70.47 + BB 스퀴즈',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'squeeze',type:'bin'}], src:{n:96,late:-0.0131,n10:0.385,surv:0.433,lens:0.344,retLens:-0.0079,h1:0.41,h2:0.24}},
+  {id:'dc_f_L41', pool:'deadcat', kind:'fake', mode:'and', label:'RSI<32.65 + VR(거래량비율)<70.47 + BB 스퀴즈 + MACD 영선아래',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:32.65}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'squeeze',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:96,late:-0.0131,n10:0.385,surv:0.433,lens:0.344,retLens:-0.0079,h1:0.41,h2:0.24}},
+  {id:'dc_f_L42', pool:'deadcat', kind:'fake', mode:'and', label:'거래량 OSC<-35.25 + VR(거래량비율)<70.47 + 골든크로스 5×9 + MACD 골든크로스',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-35.25}, {key:'vr',type:'num',dir:'lt',th:70.47}, {key:'gx5_9',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:101,late:-0.0149,n10:0.347,surv:0.356,lens:0.307,retLens:-0.0058,h1:0.29,h2:0.33}},
+  // ── pullback · real — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 32개 ──
+  {id:'pb_r_L01', pool:'pullback', kind:'real', mode:'and', label:'Stoch %K<14.15 + MA5 기울기%<-3.13 + 지지선 근접',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:14.15}, {key:'ma5slope',type:'num',dir:'lt',th:-3.13}, {key:'nearSup',type:'bin'}], src:{n:79,late:0.0427,n10:0.684,surv:0.641,lens:0.684,retLens:0.0407,h1:0.97,h2:0.45}},
+  {id:'pb_r_L02', pool:'pullback', kind:'real', mode:'and', label:'CCI<-121.44 + BB %B<0.13 + MA5 기울기%<-3.13',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-121.44}, {key:'bbPctB',type:'num',dir:'lt',th:0.13}, {key:'ma5slope',type:'num',dir:'lt',th:-3.13}], src:{n:59,late:0.0425,n10:0.576,surv:0.668,lens:0.644,retLens:0.0376,h1:0.82,h2:0.54}},
+  {id:'pb_r_L03', pool:'pullback', kind:'real', mode:'and', label:'Stoch %K<14.15 + MA5 기울기%<-3.13',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:14.15}, {key:'ma5slope',type:'num',dir:'lt',th:-3.13}], src:{n:91,late:0.0388,n10:0.659,surv:0.62,lens:0.67,retLens:0.0367,h1:0.93,h2:0.43}},
+  {id:'pb_r_L04', pool:'pullback', kind:'real', mode:'and', label:'Stoch %K<14.15 + MA5 기울기%<-3.13 + PSAR 하락',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:14.15}, {key:'ma5slope',type:'num',dir:'lt',th:-3.13}, {key:'sarBear',type:'bin'}], src:{n:91,late:0.0388,n10:0.659,surv:0.62,lens:0.67,retLens:0.0367,h1:0.93,h2:0.43}},
+  {id:'pb_r_L05', pool:'pullback', kind:'real', mode:'and', label:'CCI<-121.44 + Stoch %K<14.15 + MA5 기울기%<-3.13',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-121.44}, {key:'stochK',type:'num',dir:'lt',th:14.15}, {key:'ma5slope',type:'num',dir:'lt',th:-3.13}], src:{n:71,late:0.0395,n10:0.648,surv:0.617,lens:0.648,retLens:0.0365,h1:0.97,h2:0.43}},
+  {id:'pb_r_L06', pool:'pullback', kind:'real', mode:'and', label:'BB %B<0.13 + MA5 기울기%<-3.13 + DI 하락우위',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.13}, {key:'ma5slope',type:'num',dir:'lt',th:-3.13}, {key:'diBear',type:'bin'}], src:{n:71,late:0.0407,n10:0.592,surv:0.666,lens:0.648,retLens:0.0364,h1:0.8,h2:0.54}},
+  {id:'pb_r_L07', pool:'pullback', kind:'real', mode:'and', label:'BB %B<0.13 + MA5 기울기%<-3.13',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.13}, {key:'ma5slope',type:'num',dir:'lt',th:-3.13}], src:{n:73,late:0.04,n10:0.589,surv:0.662,lens:0.644,retLens:0.0355,h1:0.81,h2:0.52}},
+  {id:'pb_r_L08', pool:'pullback', kind:'real', mode:'and', label:'BB %B<0.13 + MA5 기울기%<-3.13 + PSAR 하락',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.13}, {key:'ma5slope',type:'num',dir:'lt',th:-3.13}, {key:'sarBear',type:'bin'}], src:{n:73,late:0.04,n10:0.589,surv:0.662,lens:0.644,retLens:0.0355,h1:0.81,h2:0.52}},
+  {id:'pb_r_L09', pool:'pullback', kind:'real', mode:'and', label:'BB %B<0.13 + ADX>23.07',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.13}, {key:'adx',type:'num',dir:'gt',th:23.07}], src:{n:50,late:0.0368,n10:0.6,surv:0.576,lens:0.66,retLens:0.0332,h1:0.9,h2:0.6}},
+  {id:'pb_r_L10', pool:'pullback', kind:'real', mode:'and', label:'CCI<-121.44 + Stoch %K<14.15 + MA60 이격도%<-5.23',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-121.44}, {key:'stochK',type:'num',dir:'lt',th:14.15}, {key:'dev60',type:'num',dir:'lt',th:-5.23}], src:{n:69,late:0.0354,n10:0.652,surv:0.62,lens:0.652,retLens:0.0329,h1:1,h2:0.49}},
+  {id:'pb_r_L11', pool:'pullback', kind:'real', mode:'and', label:'BB %B<0.13 + 지지선 근접 + PSAR 하락',
+   conds:[{key:'bbPctB',type:'num',dir:'lt',th:0.13}, {key:'nearSup',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:69,late:0.0317,n10:0.681,surv:0.584,lens:0.681,retLens:0.0301,h1:0.94,h2:0.43}},
+  {id:'pb_r_L12', pool:'pullback', kind:'real', mode:'and', label:'CCI<-121.44 + Stoch %K<14.15',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-121.44}, {key:'stochK',type:'num',dir:'lt',th:14.15}], src:{n:97,late:0.0316,n10:0.649,surv:0.597,lens:0.639,retLens:0.0298,h1:0.89,h2:0.43}},
+  {id:'pb_r_L13', pool:'pullback', kind:'real', mode:'and', label:'CCI<-121.44 + Stoch %K<14.15 + PSAR 하락',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-121.44}, {key:'stochK',type:'num',dir:'lt',th:14.15}, {key:'sarBear',type:'bin'}], src:{n:97,late:0.0316,n10:0.649,surv:0.597,lens:0.639,retLens:0.0298,h1:0.89,h2:0.43}},
+  {id:'pb_r_L14', pool:'pullback', kind:'real', mode:'and', label:'CCI<-121.44 + Stoch %K<14.15 + MACD 영선아래',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-121.44}, {key:'stochK',type:'num',dir:'lt',th:14.15}, {key:'macdBelow0',type:'bin'}], src:{n:89,late:0.0313,n10:0.629,surv:0.594,lens:0.629,retLens:0.0294,h1:0.89,h2:0.44}},
+  {id:'pb_r_L15', pool:'pullback', kind:'real', mode:'and', label:'RSI<37.81 + BB %B<0.13 + 지지선 근접',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:37.81}, {key:'bbPctB',type:'num',dir:'lt',th:0.13}, {key:'nearSup',type:'bin'}], src:{n:53,late:0.03,n10:0.623,surv:0.57,lens:0.623,retLens:0.0274,h1:1,h2:0.43}},
+  {id:'pb_r_L16', pool:'pullback', kind:'real', mode:'and', label:'거래량 OSC<-14.58 + 지지선 근접 + MACD 영선아래',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-14.58}, {key:'nearSup',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:55,late:0.029,n10:0.636,surv:0.627,lens:0.618,retLens:0.0264,h1:0.79,h2:0.42}},
+  {id:'pb_r_L17', pool:'pullback', kind:'real', mode:'and', label:'CCI<-121.44 + 지지선 근접 + PSAR 하락',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-121.44}, {key:'nearSup',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:110,late:0.0278,n10:0.655,surv:0.586,lens:0.627,retLens:0.0263,h1:0.88,h2:0.42}},
+  {id:'pb_r_L18', pool:'pullback', kind:'real', mode:'and', label:'MA20 이격도%<-10.27 + 지지선 근접',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-10.27}, {key:'nearSup',type:'bin'}], src:{n:59,late:0.0281,n10:0.644,surv:0.647,lens:0.644,retLens:0.0257,h1:1,h2:0.55}},
+  {id:'pb_r_L19', pool:'pullback', kind:'real', mode:'and', label:'MA20 이격도%<-10.27 + 지지선 근접 + DI 하락우위',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-10.27}, {key:'nearSup',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:59,late:0.0281,n10:0.644,surv:0.647,lens:0.644,retLens:0.0257,h1:1,h2:0.55}},
+  {id:'pb_r_L20', pool:'pullback', kind:'real', mode:'and', label:'MA20 이격도%<-10.27 + 지지선 근접 + PSAR 하락',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-10.27}, {key:'nearSup',type:'bin'}, {key:'sarBear',type:'bin'}], src:{n:59,late:0.0281,n10:0.644,surv:0.647,lens:0.644,retLens:0.0257,h1:1,h2:0.55}},
+  {id:'pb_r_L21', pool:'pullback', kind:'real', mode:'and', label:'RSI<37.81 + MA20 이격도%<-10.27 + 지지선 근접',
+   conds:[{key:'rsi',type:'num',dir:'lt',th:37.81}, {key:'dev20',type:'num',dir:'lt',th:-10.27}, {key:'nearSup',type:'bin'}], src:{n:56,late:0.0268,n10:0.643,surv:0.65,lens:0.643,retLens:0.0247,h1:1,h2:0.57}},
+  {id:'pb_r_L22', pool:'pullback', kind:'real', mode:'and', label:'MA20 이격도%<-10.27 + 지지선 근접 + MACD 영선아래',
+   conds:[{key:'dev20',type:'num',dir:'lt',th:-10.27}, {key:'nearSup',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:58,late:0.0258,n10:0.638,surv:0.641,lens:0.638,retLens:0.0235,h1:1,h2:0.55}},
+  {id:'pb_r_L23', pool:'pullback', kind:'real', mode:'and', label:'MA60 이격도%<-5.23 + 지지선 근접',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-5.23}, {key:'nearSup',type:'bin'}], src:{n:111,late:0.0242,n10:0.631,surv:0.597,lens:0.604,retLens:0.0232,h1:1,h2:0.45}},
+  {id:'pb_r_L24', pool:'pullback', kind:'real', mode:'and', label:'MA60 이격도%<-5.23 + 지지선 근접 + MACD 영선아래',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-5.23}, {key:'nearSup',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:111,late:0.0242,n10:0.631,surv:0.597,lens:0.604,retLens:0.0232,h1:1,h2:0.45}},
+  {id:'pb_r_L25', pool:'pullback', kind:'real', mode:'and', label:'MA60 이격도%<-5.23 + 지지선 근접 + DI 하락우위',
+   conds:[{key:'dev60',type:'num',dir:'lt',th:-5.23}, {key:'nearSup',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:111,late:0.0242,n10:0.631,surv:0.597,lens:0.604,retLens:0.0232,h1:1,h2:0.45}},
+  {id:'pb_r_L26', pool:'pullback', kind:'real', mode:'and', label:'Stoch %K<14.15 + MFI(자금흐름)<31.17',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:14.15}, {key:'mfi',type:'num',dir:'lt',th:31.17}], src:{n:51,late:0.0208,n10:0.608,surv:0.653,lens:0.647,retLens:0.0189,h1:0.82,h2:0.52}},
+  {id:'pb_r_L27', pool:'pullback', kind:'real', mode:'and', label:'Stoch %K<14.15 + MFI(자금흐름)<31.17 + PSAR 하락',
+   conds:[{key:'stochK',type:'num',dir:'lt',th:14.15}, {key:'mfi',type:'num',dir:'lt',th:31.17}, {key:'sarBear',type:'bin'}], src:{n:51,late:0.0208,n10:0.608,surv:0.653,lens:0.647,retLens:0.0189,h1:0.82,h2:0.52}},
+  {id:'pb_r_L28', pool:'pullback', kind:'real', mode:'and', label:'MFI(자금흐름)<31.17 + 지지선 근접',
+   conds:[{key:'mfi',type:'num',dir:'lt',th:31.17}, {key:'nearSup',type:'bin'}], src:{n:60,late:0.0203,n10:0.65,surv:0.657,lens:0.65,retLens:0.0184,h1:0.81,h2:0.56}},
+  {id:'pb_r_L29', pool:'pullback', kind:'real', mode:'and', label:'CCI<-121.44 + MFI(자금흐름)<31.17',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-121.44}, {key:'mfi',type:'num',dir:'lt',th:31.17}], src:{n:63,late:0.0211,n10:0.603,surv:0.646,lens:0.651,retLens:0.0184,h1:0.79,h2:0.59}},
+  {id:'pb_r_L30', pool:'pullback', kind:'real', mode:'and', label:'CCI<-121.44 + MFI(자금흐름)<31.17 + PSAR 하락',
+   conds:[{key:'cci',type:'num',dir:'lt',th:-121.44}, {key:'mfi',type:'num',dir:'lt',th:31.17}, {key:'sarBear',type:'bin'}], src:{n:63,late:0.0211,n10:0.603,surv:0.646,lens:0.651,retLens:0.0184,h1:0.79,h2:0.59}},
+  {id:'pb_r_L31', pool:'pullback', kind:'real', mode:'and', label:'MFI(자금흐름)<31.17 + 지지선 근접 + DI 하락우위',
+   conds:[{key:'mfi',type:'num',dir:'lt',th:31.17}, {key:'nearSup',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:59,late:0.0191,n10:0.644,surv:0.653,lens:0.644,retLens:0.0174,h1:0.8,h2:0.56}},
+  {id:'pb_r_L32', pool:'pullback', kind:'real', mode:'and', label:'MFI(자금흐름)<31.17 + 지지선 근접 + MACD 영선아래',
+   conds:[{key:'mfi',type:'num',dir:'lt',th:31.17}, {key:'nearSup',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:55,late:0.0183,n10:0.636,surv:0.645,lens:0.636,retLens:0.0167,h1:0.76,h2:0.58}},
+  // ── pullback · fake — [S865] 렌즈발굴(S864)·통일표준(반분 안정·Δ렌즈5%p·다양성 cap4·상한130) 7개 ──
+  {id:'pb_f_L01', pool:'pullback', kind:'fake', mode:'and', label:'거래량 OSC<-14.58 + MA20 돌파안착(상승)',
+   conds:[{key:'volOsc',type:'num',dir:'lt',th:-14.58}, {key:'settle20',type:'bin'}], src:{n:34,late:-0.069,n10:0.235,surv:0.341,lens:0.206,retLens:-0.0673,h1:0.32,h2:0}},
+  {id:'pb_f_L02', pool:'pullback', kind:'fake', mode:'and', label:'OBV 상승추세 + MACD 골든크로스 + DI 하락우위',
+   conds:[{key:'obvUp',type:'bin'}, {key:'macdGc',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:41,late:-0.0641,n10:0.244,surv:0.385,lens:0.268,retLens:-0.065,h1:0.36,h2:0.16}},
+  {id:'pb_f_L03', pool:'pullback', kind:'fake', mode:'and', label:'OBV 상승추세 + MACD 골든크로스 + MACD 영선아래',
+   conds:[{key:'obvUp',type:'bin'}, {key:'macdGc',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:74,late:-0.0579,n10:0.203,surv:0.357,lens:0.23,retLens:-0.0608,h1:0.25,h2:0.17}},
+  {id:'pb_f_L04', pool:'pullback', kind:'fake', mode:'and', label:'OBV 상승추세 + MACD 골든크로스 + MACD 영선아래 + DI 하락우위',
+   conds:[{key:'obvUp',type:'bin'}, {key:'macdGc',type:'bin'}, {key:'macdBelow0',type:'bin'}, {key:'diBear',type:'bin'}], src:{n:36,late:-0.0573,n10:0.222,surv:0.428,lens:0.278,retLens:-0.0593,h1:0.37,h2:0.18}},
+  {id:'pb_f_L05', pool:'pullback', kind:'fake', mode:'and', label:'OBV 상승추세 + 골든크로스 5×9 + MACD 골든크로스',
+   conds:[{key:'obvUp',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'macdGc',type:'bin'}], src:{n:48,late:-0.0564,n10:0.25,surv:0.342,lens:0.25,retLens:-0.0562,h1:0.28,h2:0.19}},
+  {id:'pb_f_L06', pool:'pullback', kind:'fake', mode:'and', label:'OBV 상승추세 + 골든크로스 5×9',
+   conds:[{key:'obvUp',type:'bin'}, {key:'gx5_9',type:'bin'}], src:{n:64,late:-0.0506,n10:0.266,surv:0.348,lens:0.297,retLens:-0.0513,h1:0.3,h2:0.29}},
+  {id:'pb_f_L07', pool:'pullback', kind:'fake', mode:'and', label:'OBV 상승추세 + 골든크로스 5×9 + MACD 골든크로스 + MACD 영선아래',
+   conds:[{key:'obvUp',type:'bin'}, {key:'gx5_9',type:'bin'}, {key:'macdGc',type:'bin'}, {key:'macdBelow0',type:'bin'}], src:{n:33,late:-0.0381,n10:0.303,surv:0.455,lens:0.333,retLens:-0.0379,h1:0.4,h2:0.23}},
+  ],
+};
+
+// ───── 재료 추출/매칭/장기배열 (구 sx_render.js) ─────
+function _ltStr733(lt){ if(!lt||!lt.gateOn) return 'off'; if(lt.bullish) return 'bull'; if(lt.bearish) return 'bear'; return 'mixed'; }
+// ── [S918] _smaLast733/_goldenX733 — sx_render.js에서 SSOT 이관 ──
+//   근거: 워커 importScripts 세트(session/engine/core/conditions/project_c/knn)에 render 부재 →
+//   _extractFeats733의 무가드 호출이 ReferenceError → _sxRecipeVotesCore/_sxRecipeIngCore 자체 catch가 삼켜
+//   워커 전 종목 rcpK=0·votes null (조용한 전멸 — 노드 재현으로 실증). 코어 이관 = window·worker 동시 해결.
+function _smaLast733(c, p){ if(!c || c.length < p) return null; var s=0; for(var k=c.length-p; k<c.length; k++) s+=c[k]; return s/p; }
+function _goldenX733(c, shortP, longP, lookback){   // _maGoldenCross 복제(임의 MA쌍·후행 sma)
+  if(!c || c.length < longP+lookback+1) return false;
+  for(var k=0; k<=lookback; k++){
+    var end=c.length-k;
+    var sNow=_smaLast733(c.slice(0,end), shortP), lNow=_smaLast733(c.slice(0,end), longP);
+    var sPrev=_smaLast733(c.slice(0,end-1), shortP), lPrev=_smaLast733(c.slice(0,end-1), longP);
+    if(sNow!=null&&lNow!=null&&sPrev!=null&&lPrev!=null && sPrev<=lPrev && sNow>lNow) return true;
+  }
+  return false;
+}
+// ═══ [S1095] 계산 SSOT — _extractFeats733은 sx_feature_library.js(**106재료**) 위임 shim ═══
+//   [S1098] 수치 정정(79→106). 단 이 shim은 _F733_KEYS **35개 고정**이라 라이브러리 확장이 매매로 새지 않는다.
+//  배경: 같은 재료가 ①라이브러리 ②여기(733) ③시즌3 l1_fire 세 곳에 따로 구현돼 드리프트 위험.
+//        S1095 전수대조(KR 188종×5봉=940샘플, 엄격일치)로 겹침 전 키가 라이브러리와 동일함을 증명 → 단일화.
+//  ★유일한 의도적 차이: volBreak — 구현이 ind.volumeMA를 숫자로 읽어 1880봉 전수 0% 점등(죽은배선)이던 것을
+//    라이브러리서 vma20 기준으로 수리(0%→5.6%). 레시피 conds 미사용 확인 → 매매 무영향(골든테스트 통과 근거).
+//  ★반환 키 이름은 기존 그대로 유지(rsiDiv/obvDiv). 레시피 conds가 이 이름을 참조하므로 절대 바꾸지 말 것.
+//  ★페일세이프: 라이브러리 미로드 시 조용히 죽지 않고 아래 구 구현으로 폴백(워커 rcpK 전멸 방지 · S918 교훈).
+//    워커는 sx_scan_worker.js importScripts에 sx_feature_library.js가 추가돼 있어야 SSOT 경로를 탄다.
+var _F733_KEYS = ['rsi','stochK','cci','bbPctB','volOsc','adx','rsiDiv','obvDiv','mfi','vr','obvUp','nearSup','squeeze',
+  'macdGc','macdHistUp','macdBelow0','diBear','sarBear','envDn','envUp','ichiCloudUp','ichiTK','diRebound','diOverheat',
+  'stochSlowGc','gx5_9','gx5_20','gx5_60','settle20','volBreak','dev20','dev60','dev120','dev200','ma5slope'];
+var _F733_WARNED = false;
+// ── [S1108] 발굴 전용 확장 어휘 (1단계 · 이진 22종) ────────────────────────────────
+//   ★매매 어휘(_F733_KEYS 35)는 손대지 않는다 — 라이브러리 확장이 매매로 새지 않는 차단막을 유지.
+//   _extractFeats733(ind, rows, idx, disc=true)로 호출할 때만 합쳐진다. 소비처는 발굴 entries 1곳(sx_render:6041).
+//   선발 근거(S1108 B1 심사 · 발굴풀 188종 · deadcat 7,061봉 / pullback 21,206봉 · 수익률 미조회):
+//     ① L1 퇴화 제외 — ltBull/ltBear(앵커 동어반복) massBulge demarkPerf newLow52
+//     ② L2 중복 제외(κ≥0.7) — stochOS20≡nearSup · cciOB100≡envUp · ichiSignal≡ichiCloudUp · macdHistUp≡macdGc
+//     ③ 기존 연속 어휘로 표현 가능한 레벨컷 9종 후순위 — rsiOS30/rsiOB70/stochOB80/cciOS100/mfiOS20/mfiOB80/adx25/bbLower/bbUpper
+//        (rsi·stochK·cci·mfi·adx·bbPctB가 이미 연속으로 있어 v1 임계탐색의 특수사례일 뿐)
+//     ④ 연속 31종은 2단계 이후 — 재료당 자유도 46(분위23×방향2) 추가라 별도 단계로 쪼갠다
+//     ⑤ deadCross 제외 — 시즌2 청산 신호(시즌3 L0도 같은 이유로 제외). 넣으면 어휘 58 → C=30,856로 MAXTEST 초과
+//   ⚠전부 이진이라 임계 탐색 부담 증가 0. 어휘 35+22=57 → C(57,3)=29,260 (MAXTEST 30,000 이내)
+var _F733_DISC_ADD = ['pcUp','pivotAbove','newHighN','newLowN','rsiDivBear','chaikinGc','volPatBull','volPatBear',
+  'ichiCloudBull','maConv','bwNeutral','candleBull','candleBear','swingHH','swingLL','tlbRev','psychNear',
+  'rsi50up','macdSigGc','macd0up','volMaGc','maAlignBear',
+  // [S1122] 거울상 확장 — deadCross(라이브러리 기존)+신규 23. 카드 재료 조건·자유 조합 빌더 어휘 대칭. 기존 298 레시피 conds는 base 35키만 참조=무영향.
+  'deadCross','dx5_9','dx5_60','obvDivBear','obvDown','nearRes','settle20Dn','volBreakDn','macdDead','macdHistDn','macdAbove0','diBull','sarBull','ichiCloudDn','ichiTKDn','ichiCloudBear','stochSlowDead','chaikinDead','pcDn','pivotBelow','rsi50dn','volMaDead','tlbRevDn','maAlignBull'];
+var _F733_DISC_WARNED = false;
+function _extractFeats733(ind, rows, idx, disc){
+  var G=(typeof window!=='undefined')?window:((typeof self!=='undefined')?self:null);
+  var L=G && G.SXFeatureLib;
+  if(L && L.evalOne && L.version && L.version >= 'S1095'){
+    var o={}, KS=disc ? _F733_KEYS.concat(_F733_DISC_ADD) : _F733_KEYS;
+    for(var k=0;k<KS.length;k++){ var key=KS[k]; o[key]=L.evalOne(key, ind, rows, idx); }
+    return o;
+  }
+  // [S1108] 발굴 확장 어휘는 라이브러리 없이 산출 불가 — 폴백에서 조용히 사라지면 재료가 없는 것처럼 보인다(규율 9: 조용한 실패).
+  if(disc && !_F733_DISC_WARNED){ _F733_DISC_WARNED=true; try{ console.error('[S1108] SXFeatureLib 미로드 — 발굴 확장 재료 '+_F733_DISC_ADD.length+'종이 전부 null이 됩니다. 발굴 결과를 신뢰하지 마세요.'); }catch(_e){} }
+  if(!_F733_WARNED){ _F733_WARNED=true; try{ console.warn('[S1095] SXFeatureLib 미로드 — _extractFeats733 구 구현 폴백(드리프트 주의)'); }catch(_e){} }
+  return _extractFeats733_legacy(ind, rows, idx);
+}
+// ── [S1095] 구 구현 보존 — 폴백 전용. 라이브러리와 동치임이 S1095서 증명됨(volBreak 제외). 신규 재료 추가는 라이브러리에만 할 것. ──
+function _extractFeats733_legacy(ind, rows, idx){
+  var f={};
+  f.rsi    = (ind.rsi && typeof ind.rsi.val==='number') ? ind.rsi.val : null;
+  f.stochK = (ind.stoch && typeof ind.stoch.k==='number') ? ind.stoch.k : null;
+  f.cci    = (typeof ind.cci==='number') ? ind.cci : null;
+  f.bbPctB = (ind.bb && typeof ind.bb.pctB==='number') ? ind.bb.pctB : null;
+  f.volOsc = (typeof ind.volOsc==='number') ? ind.volOsc : null;
+  f.adx    = (ind.adx && typeof ind.adx.adx==='number') ? ind.adx.adx : null;   // [S740] ind.adx는 {adx,pdi,mdi} 객체 — .adx 숫자를 읽어야(이전엔 객체를 number로 읽어 전부 null=표본0 버그)
+  f.rsiDiv = (ind.rsi && ind.rsi.div==='bullish') ? 1 : 0;
+  f.obvDiv = (ind.obv && ind.obv.div==='bullish') ? 1 : 0;
+  f.mfi    = (typeof ind.mfi==='number') ? ind.mfi : null;   // [S766] 수급 — 자금흐름지수(가격+거래량)
+  f.vr     = (typeof ind.vr==='number') ? ind.vr : null;     // [S766] 수급 — 거래량비율
+  f.obvUp  = (ind.obv && ind.obv.trend==='up') ? 1 : 0;       // [S766] 수급 — OBV 상승추세
+  f.nearSup= (ind.trend && ind.trend.struct && ind.trend.struct.nearSupport) ? 1 : 0;
+  f.squeeze= (ind.squeeze && ind.squeeze.squeeze) ? 1 : 0;
+  // [S785] 모멘텀·추세 방향 (엔진 ind 직접) — price-scale 의존이라 불리언(상태). 반등하는데 모멘텀/추세가 아직 하락 = 가짜반등 판별.
+  f.macdGc     = (ind.macd && typeof ind.macd.line==='number' && typeof ind.macd.sig==='number' && ind.macd.line>ind.macd.sig) ? 1 : 0;   // [S786] MACD>시그널(골든) · calcAllScreener는 {line,sig} 구조
+  f.macdHistUp = (ind.macd && typeof ind.macd.hist==='number' && ind.macd.hist>0) ? 1 : 0;   // 히스토그램 양(+)
+  f.macdBelow0 = (ind.macd && typeof ind.macd.line==='number' && ind.macd.line<0) ? 1 : 0;    // [S786] 영선 아래(약세구간) · line 사용
+  f.diBear     = (ind.adx && typeof ind.adx.pdi==='number' && typeof ind.adx.mdi==='number' && ind.adx.mdi>ind.adx.pdi) ? 1 : 0;   // −DI>+DI(하락 우위) · adx.pdi/mdi 기존 계산값
+  f.sarBear    = (ind.psar && ind.psar.trend==='down') ? 1 : 0;   // PSAR 하락추세(SAR 위=전환 미완)
+  // [S1094] 발굴 확장 재료 — 기존 레시피 미사용 어휘(엔벨로프·일목·DI강추세·슬로우스토). 발굴 전용(기존 conds 미참조·추가만) · full ind(calcAllScreener) 필드. 값 없으면 0(라이브 scrQuickScore ind엔 일부 부재 가능 — 무해).
+  f.envDn       = (ind.envelope && (ind.envelope.position==='below_lower' || ind.envelope.position==='near_lower')) ? 1 : 0;   // 엔벨로프 하단 이탈/근접(과대낙폭)
+  f.envUp       = (ind.envelope && (ind.envelope.position==='above_upper' || ind.envelope.position==='near_upper')) ? 1 : 0;   // 엔벨로프 상단 이탈/근접
+  f.ichiCloudUp = (ind.ichimoku && ind.ichimoku.priceVsCloud==='above') ? 1 : 0;   // 일목 구름 위(회복)
+  f.ichiTK      = (ind.ichimoku && typeof ind.ichimoku.tenkan==='number' && typeof ind.ichimoku.kijun==='number' && ind.ichimoku.tenkan>ind.ichimoku.kijun) ? 1 : 0;   // 전환선>기준선
+  f.diRebound   = (ind.adx && typeof ind.adx.adx==='number' && typeof ind.adx.pdi==='number' && typeof ind.adx.mdi==='number' && ind.adx.adx>40 && ind.adx.mdi>ind.adx.pdi) ? 1 : 0;   // ADX>40 ∧ −DI우위(투매소진)
+  f.diOverheat  = (ind.adx && typeof ind.adx.adx==='number' && typeof ind.adx.pdi==='number' && typeof ind.adx.mdi==='number' && ind.adx.adx>40 && ind.adx.pdi>ind.adx.mdi) ? 1 : 0;   // ADX>40 ∧ +DI우위(상승과열·KR위험)
+  f.stochSlowGc = (ind.stochSlow && ind.stochSlow.cross==='golden') ? 1 : 0;   // 슬로우스토 골든크로스
+  // 움직임 + MA 지지/저항 재료 — closes 필요(진입봉=슬라이스 마지막)
+  var cl = ind.closes;
+  if(cl && cl.length >= 4){
+    f.gx5_9  = _goldenX733(cl, 5, 9, 3) ? 1 : 0;
+    f.gx5_20 = _goldenX733(cl, 5, 20, 3) ? 1 : 0;
+    f.gx5_60 = _goldenX733(cl, 5, 60, 3) ? 1 : 0;
+    var ma20n=_smaLast733(cl,20), ma20p=_smaLast733(cl.slice(0,-1),20);
+    var ma60=_smaLast733(cl,60), ma120=_smaLast733(cl,120), ma200=_smaLast733(cl,200);
+    var cN=cl[cl.length-1], cP=cl[cl.length-2], c3=cl[cl.length-4];   // c3 = 3봉 전(N=3)
+    f.settle20 = (ma20n!=null && ma20p!=null && cN>ma20n && cP>ma20p && c3!=null && cN>c3) ? 1 : 0;   // [S741] 2봉 연속 MA20 위 + 3봉전 대비 상승(상승 중인 돌파만)
+    var vol=(rows && rows[idx] && typeof rows[idx].volume==='number') ? rows[idx].volume : null;
+    var volMA=(typeof ind.volumeMA==='number') ? ind.volumeMA : null;
+    f.volBreak = (f.settle20 && vol!=null && volMA!=null && volMA>0 && vol>volMA) ? 1 : 0;   // 안착(상승 돌파) + 거래량 > 평균
+    // [S741] MA 이격도(%) — 0 근처=그 MA를 지지/저항으로 테스트 중. 음수=MA 아래, 양수=MA 위.
+    f.dev20  = (ma20n && ma20n!==0) ? +(100*(cN-ma20n)/ma20n).toFixed(2) : null;
+    f.dev60  = (ma60 && ma60!==0)   ? +(100*(cN-ma60)/ma60).toFixed(2)   : null;
+    f.dev120 = (ma120 && ma120!==0) ? +(100*(cN-ma120)/ma120).toFixed(2) : null;
+    f.dev200 = (ma200 && ma200!==0) ? +(100*(cN-ma200)/ma200).toFixed(2) : null;
+    // [S758] MA5 기울기(%) — MA5 현재 vs 3봉전. 데드캣은 지속 우하향, 진짜반등은 기울기 완화/양전환 가설. closes로 직접 계산(데이터 추가 불필요).
+    var ma5n=_smaLast733(cl,5), ma5b=(cl.length>=8)?_smaLast733(cl.slice(0,-3),5):null;
+    f.ma5slope = (ma5n!=null && ma5b!=null && ma5b!==0) ? +(100*(ma5n-ma5b)/Math.abs(ma5b)).toFixed(2) : null;
+  } else { f.gx5_9=0; f.gx5_20=0; f.gx5_60=0; f.settle20=0; f.volBreak=0; f.dev20=null; f.dev60=null; f.dev120=null; f.dev200=null; f.ma5slope=null; }
+  return f;
+}
+function _condMatch733(f, conds, mode){
+  if(!conds.length) return true;
+  var r=conds.map(function(c){
+    if(c.type==='num'){ var v=f[c.key]; if(v==null) return false; return c.dir==='lt'? v<c.th : v>c.th; }
+    return f[c.key]===1 || f[c.key]===true;
+  });
+  return mode==='or' ? r.some(function(x){return x;}) : r.every(function(x){return x;});
+}
+
+// ───── 발동 판정 (구 sx_recipe_signal.js IIFE) ─────
+function _match(f, conds, mode){ try { return (typeof _condMatch733==='function') ? _condMatch733(f, conds, mode) : false; } catch(e){ return false; } }
+function _wantLt(rec){ return rec.pool==='pullback' ? 'bull' : 'bear'; }
+function _fires(rec, f, lt, maBull){ return lt===_wantLt(rec) && !maBull && !!f && _match(f, rec.conds, rec.mode); }
+function _ltOf(ind){ try { return (typeof _ltStr733==='function') ? _ltStr733(ind.maAlignLT) : null; } catch(e){ return null; } }
+
+// ───── [S877] votes 공용 사다리 — window(_sxRecipeSigFor 경유)·worker(스캔 verdict) 공용. preview-free(현행 세트 고정).
+//   사다리 근거(S862): kr 순수 겹침 1/2/3/4+→1/2/3/4 · us 정배 순수3·겹침3+→4/역배 상한2 · coin 1(승격검증 백로그) · 혼재=0.
+// ───── [S882] 준비축 불켜짐 — real 재료 사전(같은 지표·방향=느슨한 임계 OR, S873 ingScan mkDict와 동일 규칙)의 현재봉 점등 수.
+//   C 2.0 🔶 "익는 중" 배지 근거: 불 5+ & 미발동 → kr bear 3봉 내 발동 46%(S873 B). 투표권 0(표시 전용).
+function _sxRecipeIngCore(mk, ind, rows, idx){
+  try{
+    if(!ind || !Array.isArray(rows)) return null;
+    var f=_extractFeats733(ind, rows, idx); if(!f) return null;
+    var lt=_ltOf(ind); if(lt!=='bear' && lt!=='bull') return null;
+    var pool=(lt==='bear')?'deadcat':'pullback';
+    var set=(RECIPES_BY_MKT[mk]||RECIPES_BY_MKT.kr), g={};
+    for(var i=0;i<set.length;i++){ var r=set[i]; if(r.kind!=='real'||r.pool!==pool) continue;
+      var cs=r.conds||[];
+      for(var ci=0;ci<cs.length;ci++){ var c=cs[ci], k=c.key+(c.dir?('_'+c.dir):'');
+        if(c.type==='num'){ if(!g[k]) g[k]={key:c.key,type:'num',dir:c.dir,th:c.th}; else g[k].th=(c.dir==='lt')?Math.max(g[k].th,c.th):Math.min(g[k].th,c.th); }
+        else if(!g[k]) g[k]={key:c.key,type:'bin'};
+      } }
+    var K=0, on=0, litKeys=[], allKeys=[];
+    for(var kk in g){ K++; allKeys.push(kk); try{ if(_condMatch733(f, [g[kk]], 'and')){ on++; litKeys.push(kk); } }catch(_e){} }
+    return { lt:lt, on:on, total:K, litKeys:litKeys, allKeys:allKeys };   // [S898] litKeys=점등 재료(개별 breakdown용)
+  }catch(e){ return null; }
+}
+function _sxRecipeVotesCore(mk, ind, rows, idx){
+  try{
+    if(!ind || !Array.isArray(rows)) return null;
+    var f=_extractFeats733(ind, rows, idx); if(!f) return null;
+    var lt=_ltOf(ind), maBull=!!(ind.maAlign && ind.maAlign.bullish);
+    var set=RECIPES_BY_MKT[mk] || RECIPES_BY_MKT.kr, rk=0, fk=0;
+    // [S1094] tradable:false = 시즌2 votes 미포함(매매 격리·미검증 레시피). _fires/표시엔 영향 없음(등록·발동은 유지·시즌1 카드엔 등장).
+    for(var i=0;i<set.length;i++){ var r=set[i]; if(r.tradable===false) continue; if(_fires(r, f, lt, maBull)){ if(r.kind==='real') rk++; else fk++; } }
+    var pure=(rk>0 && fk===0), mixed=(rk>0 && fk>0), v=0;
+    if(pure){
+      if(mk==='kr') v = rk>=4?4 : (rk>=3?3 : (rk>=2?2 : 1));
+      else if(mk==='us') v = (lt==='bull') ? (rk>=3?4:3) : 2;
+      else v = 1;
+    }
+    return { votes:v, pure:pure, mixed:mixed, realK:rk, fakeK:fk };
+  }catch(e){ return null; }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// [S1103] v3 표시층 병행 배선 — 레거시 무변경
+//   손대지 않은 것: _F733_KEYS(35 고정 차단막) · _extractFeats733 · _condMatch733
+//                   _fires · _wantLt · _sxRecipeVotesCore · _sxRecipeIngCore
+//   v3는 위 경로를 하나도 타지 않고 자기 추출기/매처를 쓴다.
+//
+//   ★소비 제한(PREREG S1102 §8-3): 표시층 전용. DOWN은 어떤 경로로도 BUY 투표 금지.
+//
+//   ★배선 전 실측한 조용한 실패 4건(전부 예외 없이 false가 되는 종류):
+//     ①어휘 — v3는 43키를 쓰는데 _F733_KEYS는 35 고정, 교집합 19뿐.
+//              24키가 shim에 없어 66개 중 58개(88%)가 영구 침묵.
+//              → 라이브러리(106)를 직접 evalOne. 매매 어휘는 35 그대로 둔다.
+//     ②type — v3 conds는 type:'cont'(160개)인데 _condMatch733은 'num'만 수치 비교하고
+//              나머지를 이진 취급(f[key]===1) → cont 조건 전부 false.
+//              → _condMatchV3에서 'cont' 처리(+'num' 별칭 관용).
+//     ③lt라벨 — _ltStr733은 'mixed'를 반환하는데 v3 cell.lt는 'mix' → 21개 영구 침묵.
+//              → 원장 생성기(rcpx_entries_S1102.js:58)와 동일하게 'mixed'→'mix' 정규화.
+//     ④off봉 — 원장은 lt==='off'(웜업 미달)를 모집단에서 제외했다.
+//              off를 mix로 접으면 측정한 적 없는 구간에서 발동 = 모집단 불일치.
+//              → _ltV3가 off를 null로 돌려 발동 자체를 막는다.
+// ══════════════════════════════════════════════════════════════════════════
+function _v3G(){ return (typeof window!=='undefined') ? window : ((typeof self!=='undefined') ? self : null); }
+// [S1249] _v3Meta 철거 — 참조 0 死코드(RECIPES_V3_META를 읽는 곳 없음. 형제 _v3SetOf/_v3Keys는 사용 중).
+// 지연 조회 — 스크립트 로드 순서에 의존하지 않는다. 워커(미로드)에선 null → 전 경로 무영향.
+function _v3SetOf(mk){
+  var G=_v3G(), R=G && G.RECIPES_V3_BY_MKT; if(!R) return null;
+  var s=R[mk]; return (s && Array.isArray(s.recipes)) ? s.recipes : null;
+}
+// 세트가 실제로 쓰는 키의 합집합을 세트에서 도출 — 세트를 갈아끼워도 자동 동기(하드코딩 금지)
+var _V3_KEYS_CACHE=null, _V3_KEYS_SRC=null, _V3_LIB_WARNED=false;
+function _v3Keys(){
+  var G=_v3G(), R=G && G.RECIPES_V3_BY_MKT; if(!R) return null;
+  if(_V3_KEYS_SRC===R && _V3_KEYS_CACHE) return _V3_KEYS_CACHE;
+  var seen={}, out=[];
+  for(var mk in R){ var rs=(R[mk] && R[mk].recipes) || [];
+    for(var i=0;i<rs.length;i++){ var cs=rs[i].conds||[];
+      for(var c=0;c<cs.length;c++){ var k=cs[c].key; if(k && !seen[k]){ seen[k]=1; out.push(k); } } } }
+  _V3_KEYS_SRC=R; _V3_KEYS_CACHE=out; return out;
+}
+// 라이브러리 106 직접 평가. 원장과 동일 규약: bool→1/0 · 비유한/결측→null(조건 불성립)
+function _extractFeatsV3(ind, rows, idx){
+  var G=_v3G(), L=G && G.SXFeatureLib;
+  if(!(L && L.evalOne && L.version && L.version >= 'S1096d')){
+    if(!_V3_LIB_WARNED){ _V3_LIB_WARNED=true; try{ console.warn('[S1103] SXFeatureLib(>=S1096d) 미탑재 — v3 표시 비활성'); }catch(_e){} }
+    return null;
+  }
+  var keys=_v3Keys(); if(!keys || !keys.length) return null;
+  var o={};
+  for(var i=0;i<keys.length;i++){
+    var v=null; try{ v=L.evalOne(keys[i], ind, rows, idx); }catch(_e){ v=null; }
+    if(v===true) v=1; else if(v===false) v=0;
+    // ★Math.fround — 원장(.bin)이 Float32 컬럼너이고 빔서치도 Float32로 비교했다.
+    //   등록된 cont 임계 160개는 100%가 float32 정확표현값(2.29→2.2899999618530273)이라
+    //   임계 자체가 float32 분위에서 나온 것이다. 라이브가 float64로 비교하면 경계봉에서 갈린다.
+    //   실측: fround 없이 KR 42개 중 6개가 발동수 +1(전부 bear|bear 경계봉 1개) → fround 적용 시 42/42 일치.
+    //   기준은 '정밀도'가 아니라 '동결된 측정의 재현'이다.
+    o[keys[i]] = (typeof v==='number' && isFinite(v)) ? Math.fround(v) : null;
+  }
+  return o;
+}
+function _condMatchV3(f, conds, mode){
+  if(!f || !conds || !conds.length) return false;   // 빈 conds=true(레거시)와 달리 false — 표시층 오탐 방지
+  var r=[];
+  for(var i=0;i<conds.length;i++){
+    var c=conds[i], v=f[c.key], ok;
+    if(c.type==='cont' || c.type==='num'){
+      ok = (typeof v==='number' && isFinite(v)) ? (c.dir==='lt' ? (v<c.th) : (v>c.th)) : false;
+    } else {
+      ok = (v===1 || v===true);
+    }
+    r.push(ok);
+  }
+  return (mode==='or') ? r.some(function(x){return x;}) : r.every(function(x){return x;});
+}
+function _ltV3(ind){
+  var s=null; try{ s=(typeof _ltStr733==='function') ? _ltStr733(ind && ind.maAlignLT) : null; }catch(_e){ return null; }
+  if(!s || s==='off') return null;                        // 함정④ 웜업 미달 = 원장 모집단 밖
+  return (s==='bull' || s==='bear') ? s : 'mix';          // 함정③ 'mixed'→'mix' (_lk SSOT)
+}
+function _stV3(ind){
+  var ma=(ind && ind.maAlign) || {};
+  return ma.bullish ? 'bull' : (ma.bearish ? 'bear' : 'mid');   // _sk SSOT (sx_render.js:7499)
+}
+// 레거시 _fires 구조적 커버리지: lt===_wantLt(bull|bear만) && !maBull(st bear|mid만) = 9칸 중 4칸
+//   → mix 열 3칸 + st bull 행 3칸은 레거시가 원천 침묵. 교집합률을 전체로 내면 분모가 오염된다.
+function _v3LegacyCovers(lt, st){ return (lt==='bull'||lt==='bear') && (st==='bear'||st==='mid'); }
+function _firesV3(rec, f, lt, st){
+  if(!rec || !rec.cell || !f || !lt || !st) return false;
+  if(lt!==rec.cell.lt || st!==rec.cell.st) return false;
+  return _condMatchV3(f, rec.conds, rec.mode);
+}
+// 집계 SSOT — 3×3 그리드 태그와 교차검증 카드가 공용으로 소비한다(각자 재구현 금지).
+function _sxRecipeV3Core(mk, ind, rows, idx){
+  try{
+    if(!ind || !Array.isArray(rows)) return null;
+    var set=_v3SetOf(mk); if(!set || !set.length) return null;
+    var lt=_ltV3(ind); if(!lt) return null;
+    var st=_stV3(ind), i;
+    var inCell=[];
+    for(i=0;i<set.length;i++){ var r0=set[i]; if(r0.cell && r0.cell.lt===lt && r0.cell.st===st) inCell.push(r0); }
+    var base={ mk:mk, lt:lt, st:st, cell:lt+'|'+st, inCell:inCell.length, up:0, down:0,
+               fired:[], clusters:0, clUp:0, clDn:0, covered:_v3LegacyCovers(lt,st) };
+    if(!inCell.length) return base;                       // 등록 레시피 없는 셀 = 정상적 무발동
+    var f=_extractFeatsV3(ind, rows, idx); if(!f) return null;
+    // [S1104] 함정⑥ 재발 수정 — 클러스터 id는 **셀×kind 스코프**다(S1103b 뷰어에서 잡았던 그 함정).
+    //   cluster 번호만으로 dedup하면 같은 칸의 UP#0과 DOWN#0이 하나로 합쳐져 계보를 과소집계한다.
+    //   실측 충돌(S1104): KR bear|mid가 0·2번 공유 · US mix|bear가 0번 공유 → kind#cluster로 센다.
+    //   소비처 0건 상태에서 고쳤으므로 레거시·표시 어디에도 영향 없음. clUp/clDn은 추가 필드(표시용).
+    var cl={}, nc=0, clU={}, ncU=0, clD={}, ncD=0;
+    for(i=0;i<inCell.length;i++){
+      var rec=inCell[i]; if(!_firesV3(rec, f, lt, st)) continue;
+      var isDn=(rec.kind==='down');
+      if(isDn) base.down++; else base.up++;
+      if(rec.cluster!=null){
+        var ck=rec.kind+'#'+rec.cluster;
+        if(!cl[ck]){ cl[ck]=1; nc++; }
+        if(isDn){ if(!clD[rec.cluster]){ clD[rec.cluster]=1; ncD++; } }
+        else    { if(!clU[rec.cluster]){ clU[rec.cluster]=1; ncU++; } }
+      }
+      base.fired.push({ id:rec.id, kind:rec.kind, cluster:rec.cluster, conds:rec.conds, src:rec.src });
+    }
+    base.clusters=nc; base.clUp=ncU; base.clDn=ncD;
+    return base;
+  }catch(e){ return null; }
+}
+
+
+// ════════ [S1110] core v4 — 칸 사다리 신호(cell ladder) ════════
+//   데이터: sx_cell_data.js(전역 SX_CELL_DATA — rules 28·채택 카테고리 어휘). 데이터 없으면 null(워커 등 미로드 컨텍스트 안전).
+//   판정: 현재 봉의 칸(단기 s × 장기 lt — _trendLabel 축과 동일 판정) → 채택 규칙 조회 → 카테고리별 동시발동 k → k≥kStarN=hit.
+//   ★소비 제한: 표시(브리핑) 전용 — C 판정/votes 미배선(A/B 후 결정). DOWN·FAKE는 어떤 경로로도 BUY 투표 금지(S1102 §8-3 계승).
+//   ★in-sample 주의: 규칙 28건은 3창 적합 — 최종 검증=시간축 OOS(2026-07 스냅 이후 캔들).
+function _cellCondOk733(f,c){ var v=f?f[c.key]:null; if(c.type==='num'){ if(typeof v!=='number'||!isFinite(v)) return false; return c.dir==='lt' ? v<c.th : v>c.th; } return !!v; }
+function _cellKeyOf(ind, rows, idx, axisGen){
+  // [S1111] axisGen: 'ma52060'(구축=엔진 maAlign 5>20>60·기본 폴백) | 'ma51020'(신축=rows 직접 5>10>20).
+  //   칸 배지는 로드된 SX_CELL_DATA.meta.axisGen을 따라감 — 데이터-판정 세대 정합 자동(구 데이터=구 판정·신 데이터 배포 순간 신 판정).
+  try{
+    var lt=_ltStr733(ind&&ind.maAlignLT); if(lt!=='bear'&&lt!=='bull'&&lt!=='mixed') return null;
+    var s;
+    if(axisGen==='ma51020'){
+      if(!Array.isArray(rows)||idx==null) return null;
+      var end=idx+1; if(end<20||end>rows.length) return null;
+      var sm=function(p){ var su=0; for(var q=end-p;q<end;q++){ var r=rows[q]; var cc=(r&&(r.close!=null?r.close:r[4])); if(typeof cc!=='number'||!isFinite(cc)) return null; su+=cc; } return su/p; };
+      var a=sm(5), b=sm(10), d=sm(20); if(a==null||b==null||d==null) return null;
+      s=(a>b&&b>d)?'bull':((a<b&&b<d)?'bear':'mixed');
+    } else {
+      var ma=ind&&ind.maAlign; s=(ma&&ma.bullish)?'bull':((ma&&ma.bearish)?'bear':'mixed');
+    }
+    return s+'|'+lt;
+  }catch(e){ return null; }
+}
+function _sxCellSignalCore(mk, ind, rows, idx, opts){   // [S1201] opts.btMode=true → 활동층(act) 스킵(BT 봉당 호출 비용 절감)
+  try{
+    var D=(typeof SX_CELL_DATA!=='undefined')?SX_CELL_DATA:((typeof window!=='undefined'&&window.SX_CELL_DATA)||null);
+    if(!D||!D.rules) return null;
+    var ck=_cellKeyOf(ind, rows, idx, (D.meta&&D.meta.axisGen)||'ma52060'); if(!ck) return null;   // [S1111] 데이터 세대 추종
+    var rules=[]; for(var i=0;i<D.rules.length;i++){ var r=D.rules[i]; if(r.mkt===mk&&r.cell===ck) rules.push(r); }
+    // [S1177] 2층 구조 — ①규칙(tier: strict=강한 신호 / soft=일반 신호·v4 데이터부터) ②어휘 활동(규칙 없는 카테고리 겹침 k≥2·판정 아님).
+    //   VOC: v4=vocabAll(전 카테고리) 우선 · v3=vocab(채택 카테고리 트림) 폴백 — 폴백 시 활동층은 부분 커버(정직한 한계).
+    var VOC=(D.vocabAll&&D.vocabAll[mk])||(D.vocab&&D.vocab[mk])||{};
+    var f=_extractFeats733(ind, rows, idx, true);   // 발굴 어휘(disc) 포함 추출 — vocab conds가 참조
+    var _kOf=function(cat){ var vs=VOC[cat]||[], k=0; for(var q=0;q<vs.length;q++){ var cc=vs[q].conds, ok=true; for(var ci=0;ci<cc.length;ci++){ if(!_cellCondOk733(f,cc[ci])){ ok=false; break; } } if(ok) k++; } return k; };
+    var out=[], lbl=(rules.length&&rules[0].cellLbl)||null, ruleCats={};
+    for(var j=0;j<rules.length;j++){ var ru=rules[j]; ruleCats[ru.cat]=1;
+      out.push({ cat:ru.cat, kind:ru.kind, tier:(ru.tier||'strict'), k:_kOf(ru.cat), kStar:ru.kStar, kStarN:ru.kStarN, topD:ru.topD, repro:ru.repro, hit:false });
+    }
+    for(var j2=0;j2<out.length;j2++){ out[j2].hit=(out[j2].k>=out[j2].kStarN); }
+    var act=[];   // [S1177] 어휘 활동 — 단독 발동(k=1)은 표시하지 않는다(S835 겹침만 신뢰)
+    if(!(opts&&opts.btMode)){   // [S1201] BT는 buy 판정만 필요 — 전 카테고리 순회(어휘 1,247) 생략
+      for(var cat2 in VOC){ if(ruleCats[cat2]) continue; var k2=_kOf(cat2); if(k2>=2) act.push({ cat:cat2, kind:cat2.split('-')[1], k:k2 }); }
+      act.sort(function(a,b){ return b.k-a.k; });
+    }
+    return { cell:ck, lbl:lbl, sig:out, act:act };
+  }catch(e){ return null; }
+}
+if(typeof window!=='undefined'){ window._sxCellSignalCore=_sxCellSignalCore; window._cellKeyOf=_cellKeyOf; }
