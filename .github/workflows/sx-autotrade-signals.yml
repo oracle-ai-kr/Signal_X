@@ -1,0 +1,66 @@
+# [S930] SX 자동매매 ① 신호 push — 실엔진 headless(오프라인 하네스 계보)를 스케줄/스냅커밋/수동으로 실행
+#  결과: 신호원장 → Worker /sx/autotrade/signals (shared secret) → KV at:signals:{mkt} → sx_autotrade.html 점등
+#  필요 시크릿: SX_WORKER_BASE, SX_AT_KEY (= Worker env AT_KEY 와 동일값)
+#  필요 커밋파일: offline/at_signals_push.sh, offline/sx_offline_shim.js, offline/sig_runner_s927.js,
+#                offline/snap_builder_s940.js,  # [S940] 스냅 자동갱신(런타임 fetch — kr:네이버 · coin:업비트[S1192] · coin4h:업비트 240분봉[S1663])
+#                sx_analysis_engine.js, sx_project_c.js, sx_recipe_core.js, sx_exec_core.js, sx_verdict_val.js, snap_{kr,us,coin}.json   # [S1663] +sx_exec_core.js(레짐 v3 rg5)
+#                sx_feature_library.js, sx_cell_data.js  # [S1180] 레시피 v2(어휘규칙) 판정용
+name: SX Autotrade Signals
+
+on:
+  schedule:
+    # 매일 06:30 UTC = 15:30 KST. [S940] 스냅은 실행 시 최신 일봉으로 자동 리빌드(런타임 · kr네이버/coin업비트/us야후).
+    # [S1472] 평일→매일로 넓혔던 것을 [S1497]에서 분리: KR/US=06:30 UTC(15:30 KST) 평일 — 장마감 후 확정봉 · 코인=00:05 UTC(09:05 KST) 매일 — 업비트 일봉 경계(09:00 KST) 직후 확정봉.
+    #   어느 cron이 발동했는지는 github.event.schedule로 분기 → env MARKETS(at_signals_push.sh가 해당 시장만 실행).
+    # ※ 스케줄은 GitHub 규칙상 "기본 브랜치"에서만 실행됨 → main = 검증본. [S946]
+    #   [S1663] 코인 4시간봉 트랙(coin4h): 업비트 240분봉 경계(00·04·08·12·16·20 UTC = 09·13·17·21·01·05 KST) 직후 5분 · 하루 6회. 00:05 UTC는 coin(일봉)·coin4h 둘 다.
+    #   ⚠ 비공개 repo Actions 분(무료 2,000분/월) — 코인 실행이 하루 1회→6회로 늘어난다(실행당 소요는 Actions 로그로 확인).
+    - cron: '30 6 * * 1-5'
+    #   [S1672] 코인 회차의 1차 트리거는 워커 dispatch(봉 경계 +5분 · 스케줄 큐 안 탐). 아래 :25 스케줄은 폴백 — push.sh가 워커 asof를 먼저 물어 이미 도착했으면 수십 초 만에 끝난다(분 절약).
+    - cron: '25 0 * * *'
+    - cron: '25 4,8,12,16,20 * * *'
+  push:
+    # [S946] main 한정 — 실험 브랜치(recipe-lab)의 스냅 커밋이 신호를 밀지 않게. (기본 브랜치명이 다르면 여기 맞출 것)
+    branches:
+      - main
+    # 스냅 갱신 커밋 시 즉시 재생성
+    paths:
+      - 'snap_kr.json'
+      - 'snap_us.json'
+      - 'snap_coin.json'
+  workflow_dispatch:
+    inputs:
+      markets:
+        description: '실행 시장(쉼표 구분: kr,us,coin)'
+        required: false
+        default: 'kr,us,coin,coin4h'
+      force:
+        description: '워커 asof와 같아도 강제 실행(1)'
+        required: false
+        default: '0'
+
+concurrency:
+  group: sx-autotrade-signals
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  push-signals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build engine + generate signals + push to KV
+        env:
+          WORKER_BASE: ${{ secrets.SX_WORKER_BASE }}
+          AT_KEY: ${{ secrets.SX_AT_KEY }}
+          SRC: .
+          OFF_DIR: offline
+          # [S1497] 스케줄 분기: 00:05 UTC cron=coin,coin4h · 04/08/12/16/20:05 UTC cron=coin4h · 06:30 UTC cron=kr,us · push/수동=입력값(기본 전부) [S1663]
+          MARKETS: ${{ github.event_name == 'schedule' && (github.event.schedule == '25 0 * * *' && 'coin,coin4h' || github.event.schedule == '25 4,8,12,16,20 * * *' && 'coin4h' || 'kr,us') || (github.event.inputs.markets || 'kr,us,coin,coin4h') }}
+          FORCE: ${{ github.event.inputs.force || '0' }}   # [S1672] 1이면 워커 asof 확인 없이 무조건 빌드·PUT
+        run: bash offline/at_signals_push.sh
